@@ -1,0 +1,160 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# ----
+# General
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# ----
+# Flutter & Dart
+
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+.build/
+.packages
+pubspec.lock
+generated_plugin_registrant.dart
+
+# ----
+# Android
+
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.gradle
+/android/app/build
+/android/build
+/android/local.properties
+/android/.idea
+/android/.settings
+/android/.externalNativeBuild
+/android/.cxx
+/android/.flutter-plugins
+/android/.flutter-plugins-dependencies
+/android/.metadata
+/android/.project
+/android/.classpath
+/android/.settings/
+/android/app/.cxx
+/android/app/.externalNativeBuild
+/android/app/.flutter-plugins
+/android/app/.flutter-plugins-dependencies
+/android/app/.metadata
+/android/app/.project
+/android/app/.classpath
+/android/app/.settings/
+/android/key.properties
+/android/gradle.properties
+/android/gradlew
+/android/gradlew.bat
+/android/gradle/
+/android/app/google-services.json
+/android/app/key.jks
+/android/app/release/
+/android/app/debug/
+/android/app/profile/
+/android/.idea/
+/android/.settings/
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/app/libs/
+/android/app/intermediates/
+/android/app/generated/
+/android/app/tmp/
+
+# ----
+# iOS & macOS
+
+.DS_Store
+profile
+Pods/
+Flutter/Flutter.podspec
+Flutter/Generated.xcconfig
+Flutter/ephemeral/
+Flutter/App.framework
+Flutter/Flutter.framework
+.symlinks/
+xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.xcuserstate
+*.xcworkspace
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+
+# ----
+# Windows
+
+build/
+windows/runner/Debug/
+windows/runner/Release/
+windows/runner/Profile/
+windows/runner/App.pdb
+windows/runner/App.exe
+windows/runner/App.exp
+windows/runner/App.lib
+windows/runner/App.map
+windows/runner/FlutterWindow.dll
+windows/runner/FlutterWindow.exp
+windows/runner/FlutterWindow.lib
+windows/runner/FlutterWindow.map
+windows/runner/icudtl.dat
+windows/runner/flutter_*.dll
+windows/runner/flutter_export.h
+windows/runner/flutter_window.cpp
+windows/runner/flutter_window.h
+windows/runner/main.cpp
+windows/runner/resource.h
+windows/runner/utils.cpp
+windows/runner/utils.h
+windows/runner/*.vcxproj*
+windows/runner/*.vcxproj.filters
+windows/runner/*.vcxproj.user
+windows/runner/*.sln
+windows/runner/*.vcxproj.*
+windows/runner/*.sln
+windows/runner/*.vcxproj.filters
+windows/runner/*.vcxproj.user
+
+# ----
+# IDEs (IntelliJ & VSCode)
+
+*.iml
+.idea/
+*.ipr
+*.iws
+out/
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# End of https://www.toptal.com/developers/gitignore/api/flutter,dart,macos,windows,android,intellij,visualstudiocode
