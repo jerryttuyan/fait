@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:fait/data/enums.dart';
 
 /// BMI using imperial units
 double bmi({required double lb, required double inches}) =>
@@ -17,5 +18,3 @@ double rmr({
     return (3.35 * lb) + (15.42 * inches) - (2.31 * age) + 43;
   }
 }
-
-enum Gender { male, female }

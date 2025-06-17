@@ -3,9 +3,7 @@
 *.log
 *.pyc
 *.swp
-.DS_Store
 .atom/
-.build/
 .buildlog/
 .history
 .svn/
@@ -31,7 +29,6 @@ app.*.map.json
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-.build/
 .packages
 pubspec.lock
 generated_plugin_registrant.dart
@@ -55,7 +52,6 @@ generated_plugin_registrant.dart
 /android/.metadata
 /android/.project
 /android/.classpath
-/android/.settings/
 /android/app/.cxx
 /android/app/.externalNativeBuild
 /android/app/.flutter-plugins
@@ -136,10 +132,6 @@ windows/runner/*.vcxproj*
 windows/runner/*.vcxproj.filters
 windows/runner/*.vcxproj.user
 windows/runner/*.sln
-windows/runner/*.vcxproj.*
-windows/runner/*.sln
-windows/runner/*.vcxproj.filters
-windows/runner/*.vcxproj.user
 
 # ----
 # IDEs (IntelliJ & VSCode)
@@ -158,3 +150,8 @@ out/
 !.vscode/*.code-snippets
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter,dart,macos,windows,android,intellij,visualstudiocode
+
+# ----
+# Isar & build_runner
+
+isar_schema.json
