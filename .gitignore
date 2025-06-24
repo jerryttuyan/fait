@@ -61,10 +61,6 @@ generated_plugin_registrant.dart
 /android/app/.classpath
 /android/app/.settings/
 /android/key.properties
-/android/gradle.properties
-/android/gradlew
-/android/gradlew.bat
-/android/gradle/
 /android/app/google-services.json
 /android/app/key.jks
 /android/app/release/
