@@ -3,6 +3,8 @@ import 'bmi_rmr_page.dart';
 import 'macros_page.dart'; // Import the new page
 import 'profile_page.dart';
 import 'weight_tracking_page.dart';
+import 'exercise_catalog_page.dart';
+import 'workouts_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
     BmiRmrPage(),
     MacrosPage(), // Add the new page
     WeightTrackingPage(),
+    WorkoutsPage(),
     ProfilePage(),
   ];
 
@@ -25,6 +28,7 @@ class _MainScreenState extends State<MainScreen> {
     'BMI & RMR',
     'Macronutrient Plan', // Add its title
     'Weight Tracker',
+    'Workouts',
     'My Profile',
   ];
 
@@ -63,6 +67,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.monitor_weight_outlined),
             activeIcon: Icon(Icons.monitor_weight),
             label: 'Weight',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.fitness_center_outlined),
+            activeIcon: Icon(Icons.fitness_center),
+            label: 'Workouts',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
