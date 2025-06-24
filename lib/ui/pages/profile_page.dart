@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:isar/isar.dart';
 import 'package:fait/data/enums.dart'; // Use the new enums file
 import 'package:fait/data/user_profile.dart';
 import 'package:fait/data/weight_entry.dart';
 import 'package:fait/main.dart';
-import 'package:collection/collection.dart'; // Import for .firstWhereOrNull
+// Import for .firstWhereOrNull
 import 'package:flutter/foundation.dart';
 
 class ProfilePage extends StatefulWidget {
