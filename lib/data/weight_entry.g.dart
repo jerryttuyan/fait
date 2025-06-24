@@ -39,7 +39,7 @@ const WeightEntrySchema = CollectionSchema(
   getId: _weightEntryGetId,
   getLinks: _weightEntryGetLinks,
   attach: _weightEntryAttach,
-  version: '3.1.0+1',
+  version: '3.1.8',
 );
 
 int _weightEntryEstimateSize(
