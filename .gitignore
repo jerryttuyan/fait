@@ -89,6 +89,7 @@ Pods/
 Flutter/Flutter.podspec
 Flutter/Generated.xcconfig
 Flutter/ephemeral/
+macos/Flutter/ephemeral/
 Flutter/App.framework
 Flutter/Flutter.framework
 .symlinks/
