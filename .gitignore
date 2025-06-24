@@ -30,7 +30,6 @@ app.*.map.json
 .pub-cache/
 .pub/
 .packages
-pubspec.lock
 generated_plugin_registrant.dart
 
 # ----
