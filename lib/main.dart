@@ -1,20 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'data/user_profile.dart';
+import 'data/user_profile.dart'; // Import the new profile schema
 import 'data/weight_entry.dart';
-import 'ui/pages/landing_page.dart'; // Import the new landing page
-// import 'ui/pages/main_screen.dart'; // MainScreen is not the initial home anymore
+import 'ui/pages/main_screen.dart';
+import 'data/exercise.dart';
+import 'data/workout.dart';
+import 'data/workout_exercise.dart';
+import 'data/workout_set.dart';
+import 'data/exercise_catalog.dart';
+import 'data/exercise_suggestions.dart';
 
 late Isar isar;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dir = await getApplicationDocumentsDirectory();
-  isar = await Isar.open([
-    WeightEntrySchema,
-    UserProfileSchema,
-  ], directory: dir.path);
+  isar = await Isar.open(
+    [
+      WeightEntrySchema,
+      UserProfileSchema,
+      ExerciseSchema,
+      WorkoutSchema,
+      WorkoutExerciseSchema,
+      WorkoutTemplateSchema,
+      // WorkoutSet is embedded, no schema needed
+      CompletedWorkoutSchema,
+    ],
+    directory: dir.path,
+  );
+
+  // Load or update exercises
+  await _loadExercises();
+
   runApp(const MyApp());
 }
 
@@ -29,8 +47,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorSchemeSeed: Colors.blue, // This is your main app's theme
       ),
-      // Set the new FitnessAppLandingPage as the starting screen
-      home: const FitnessAppLandingPage(),
+      home: const MainScreen(),
     );
   }
 }

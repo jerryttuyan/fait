@@ -151,3 +151,4 @@ out/
 # Isar & build_runner
 
 isar_schema.json
+**/*.g.dart

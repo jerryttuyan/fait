@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'combined_stats_page.dart';
 import 'macros_page.dart';
 import 'profile_page.dart';
-import 'workout_page.dart'; // Import the new WorkoutPage
+import 'weight_tracking_page.dart';
+import 'exercise_catalog_page.dart';
+import 'workouts_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,6 +18,9 @@ class _MainScreenState extends State<MainScreen> {
 
   static const List<Widget> _pages = <Widget>[
     WorkoutPage(), // Workout first
+    BmiRmrPage(),
+    MacrosPage(), // Add the new page
+    WeightTrackingPage(),
     MacrosPage(),
     CombinedStatsPage(),
     ProfilePage(),
@@ -47,9 +52,9 @@ class _MainScreenState extends State<MainScreen> {
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center_outlined),
-            activeIcon: Icon(Icons.fitness_center),
-            label: 'Workout',
+            icon: Icon(Icons.calculate_outlined),
+            activeIcon: Icon(Icons.calculate),
+            label: 'BMI/RMR',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.pie_chart_outline),

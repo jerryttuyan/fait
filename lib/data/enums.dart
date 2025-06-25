@@ -13,3 +13,38 @@ enum ActivityLevel {
   veryActive,
   extraActive,
 }
+
+enum PushPullType { push, pull, legs, fullBody, cardio, other }
+
+enum EquipmentType {
+  barbell,
+  dumbbell,
+  machine,
+  bodyweight,
+  cable,
+  kettlebell,
+  band,
+  other,
+}
+
+enum MuscleGroup {
+  chest,
+  back,
+  shoulders,
+  arms,
+  legs,
+  core,
+  fullBody,
+  cardio,
+  other,
+}
+
+enum SplitType {
+  push,
+  pull,
+  legs,
+  fullBody,
+  upper,
+  lower,
+  other,
+}
