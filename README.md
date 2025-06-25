@@ -1,16 +1,35 @@
-# fait
+# fait 🏋️‍♂️📊
 
-Fitness Application
+A simple, cross-platform fitness tracker for logging workouts, tracking muscle recovery, and monitoring your progress.
 
-## Getting Started
+## 🚀 Quick Start
 
-This project is a starting point for a Flutter application.
+1. **Clone the repo:**
+   ```sh
+   git clone <your-repo-url>
+   cd fait
+   ```
+2. **Install dependencies:**
+   ```sh
+   flutter pub get
+   ```
+3. **Generate code (for Isar and other codegen):**
+   ```sh
+   flutter pub run build_runner build --delete-conflicting-outputs
+   ```
+4. **Ensure all platform files are present:**
+   ```sh
+   flutter create .
+   ```
+5. **(macOS/iOS only) Install CocoaPods dependencies:**
+   ```sh
+   cd macos # or ios
+   pod install
+   cd ..
+   ```
+6. **Run the app:**
+   ```sh
+   flutter run
+   ```
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
