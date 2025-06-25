@@ -4,6 +4,7 @@ import '../../main.dart';
 import '../../data/workout.dart';
 import '../../data/exercise.dart';
 import 'workout_builder_page.dart';
+import 'muscle_recovery_page.dart';
 
 class WorkoutsPage extends StatefulWidget {
   const WorkoutsPage({Key? key}) : super(key: key);
@@ -59,7 +60,7 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
       for (final ex in workout.exercises) {
         final exercise = await isar.exercises.filter().nameEqualTo(ex.name).findFirst();
         if (exercise != null) {
-          muscleGroups.add(exercise.muscleGroup.name);
+          muscleGroups.addAll(exercise.muscleGroups);
         }
       }
     } catch (e) {
@@ -106,6 +107,19 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
         title: const Text('Workout History'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.self_improvement),
+            tooltip: 'Muscle Recovery',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MuscleRecoveryPage(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<CompletedWorkout>>(
         future: _workoutsFuture,

@@ -114,36 +114,66 @@ class _MacrosPageState extends State<MacrosPage> {
 
     return ListView(
       children: [
-        _buildMacroCard('Calories', _result!.macros.calories.round().toString(), 'kcal'),
-        const SizedBox(height: 16),
-        _buildMacroCard('Protein', _result!.macros.protein.round().toString(), 'grams'),
-        const SizedBox(height: 16),
-        _buildMacroCard('Carbs', _result!.macros.carbs.round().toString(), 'grams'),
-        const SizedBox(height: 16),
-        _buildMacroCard('Fat', _result!.macros.fat.round().toString(), 'grams'),
-        const SizedBox(height: 32),
-        Center(
-          child: IconButton.filled(
-            iconSize: 32,
-            onPressed: _calculate,
-            icon: const Icon(Icons.refresh),
+        Text(
+          'Daily Macros',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
           ),
         ),
+        const SizedBox(height: 16),
+        _buildMacroCard('Calories', _result!.macros.calories.round().toString(), 'kcal', Icons.local_fire_department, Colors.orange),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _buildMacroCard('Protein', _result!.macros.protein.round().toString(), 'g', Icons.fitness_center, Colors.red)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildMacroCard('Carbs', _result!.macros.carbs.round().toString(), 'g', Icons.grain, Colors.green)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildMacroCard('Fat', _result!.macros.fat.round().toString(), 'g', Icons.water_drop, Colors.blue),
       ],
     );
   }
 
-  Widget _buildMacroCard(String title, String value, String unit) {
+  Widget _buildMacroCard(String title, String value, String unit, IconData icon, Color color) {
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: color),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
-            Text(value, style: Theme.of(context).textTheme.displayMedium),
-            Text(unit, style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              unit,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

@@ -31,7 +31,7 @@ class ExerciseCatalogPage extends StatelessWidget {
               final ex = exercises[index];
               return ListTile(
                 title: Text(ex.name),
-                subtitle: Text('${ex.muscleGroup.name} • ${ex.equipment.name}'),
+                subtitle: Text('${ex.muscleGroups.join(', ')} • ${ex.equipment.name}'),
               );
             },
           );

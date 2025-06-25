@@ -129,78 +129,231 @@ class _CombinedStatsPageState extends State<CombinedStatsPage> {
               ),
             ),
           if (_bmi != null && _rmr != null)
-            Column(
-              children: [
-                Text(
-                  'Your Body Mass Index (BMI)',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Text(
-                  _bmi!.toStringAsFixed(1),
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Your Resting Metabolic Rate (RMR)',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Text(
-                  _rmr!.toStringAsFixed(0) + ' kcal/day',
-                  style: Theme.of(context).textTheme.displayLarge,
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          const Divider(height: 40),
-          Text('Weight Tracker', style: Theme.of(context).textTheme.titleLarge),
-          TextField(
-            controller: _weightCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Enter current weight (lb)',
-            ),
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _addWeightEntry,
-            child: const Text('Add Entry'),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 300,
-            child: _chartSpots.isEmpty
-                ? const Center(
-                    child: Text('Add a weight entry to see your progress.'),
-                  )
-                : LineChart(
-                    LineChartData(
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: _chartSpots,
-                          isCurved: true,
-                          barWidth: 3,
-                          color: Theme.of(context).colorScheme.primary,
-                          belowBarData: BarAreaData(
-                            show: true,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.3),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'BMI',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              IconButton(
+                                icon: Icon(Icons.info_outline, size: 14, color: Colors.grey[400]),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => _showInfoDialog(
+                                  context,
+                                  'Body Mass Index (BMI)',
+                                  'BMI is a measure of body fat based on height and weight. It helps assess if you\'re at a healthy weight for your height.',
+                                ),
+                              ),
+                            ],
                           ),
+                        ],
+                      ),
+                    ),
+                    // BMI Value
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        _bmi!.toStringAsFixed(1),
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
                         ),
-                      ],
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 36,
+                      color: Colors.grey.shade300,
+                    ),
+                    // RMR Label
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'RMR',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              IconButton(
+                                icon: Icon(Icons.info_outline, size: 14, color: Colors.grey[400]),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => _showInfoDialog(
+                                  context,
+                                  'Resting Metabolic Rate (RMR)',
+                                  'RMR is the number of calories your body burns at rest to maintain basic life functions like breathing, circulation, and cell production.',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    // RMR Value
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        children: [
+                          Text(
+                            '${_rmr!.toStringAsFixed(0)}',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          Text(
+                            'kcal',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 24),
+          Text(
+            'Weight Progress',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                height: 250,
+                child: _chartSpots.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.show_chart, size: 48, color: Colors.grey[400]),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Add weight entries to see your progress',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : LineChart(
+                        LineChartData(
+                          gridData: FlGridData(show: false),
+                          titlesData: FlTitlesData(show: false),
+                          borderData: FlBorderData(show: false),
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: _chartSpots,
+                              isCurved: true,
+                              barWidth: 2.5,
+                              color: Theme.of(context).colorScheme.primary,
+                              belowBarData: BarAreaData(
+                                show: true,
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              ),
+                              dotData: FlDotData(show: false),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Add Weight Entry',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _weightCtrl,
+                      decoration: InputDecoration(
+                        labelText: 'Current weight (lb)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        labelStyle: TextStyle(fontSize: 14),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: IconButton.filled(
-              iconSize: 32,
-              onPressed: () {
-                _calculate();
-                _loadWeightData();
-              },
-              icon: const Icon(Icons.refresh),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _addWeightEntry,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Add', style: TextStyle(fontSize: 14)),
+                  ),
+                ],
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInfoDialog(BuildContext context, String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
           ),
         ],
       ),

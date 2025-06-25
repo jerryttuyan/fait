@@ -366,7 +366,7 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
         final ex = exercises[index];
         return ListTile(
           title: Text(ex.name),
-          subtitle: Text(ex.muscleGroup.name),
+          subtitle: Text(ex.muscleGroups.join(', ')),
           onTap: () {
             Navigator.of(context).pop(_ExercisePickerResult(ex));
           },
@@ -376,15 +376,15 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
   }
 
   Widget _buildGroupedExerciseList(List<Exercise> exercises) {
-    // Group exercises by muscle group
-    final grouped = <MuscleGroup, List<Exercise>>{};
+    // Group exercises by their main muscle (first in muscleGroups)
+    final grouped = <String, List<Exercise>>{};
     for (final ex in exercises) {
-      grouped.putIfAbsent(ex.muscleGroup, () => []).add(ex);
+      final mainMuscle = ex.muscleGroups.isNotEmpty ? ex.muscleGroups.first : 'Other';
+      grouped.putIfAbsent(mainMuscle, () => []).add(ex);
     }
 
     // Sort muscle groups alphabetically
-    final sortedGroups = grouped.keys.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
+    final sortedGroups = grouped.keys.toList()..sort();
 
     return ListView.builder(
       shrinkWrap: true,
@@ -392,15 +392,14 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
       itemBuilder: (context, groupIndex) {
         final muscleGroup = sortedGroups[groupIndex];
         final groupExercises = grouped[muscleGroup]!;
-        
         return ExpansionTile(
           title: Text(
-            muscleGroup.name.toUpperCase(),
+            muscleGroup.toUpperCase(),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           children: groupExercises.map((ex) => ListTile(
             title: Text(ex.name),
-            subtitle: Text(ex.equipment.name),
+            subtitle: Text(ex.muscleGroups.join(', ')),
             onTap: () {
               Navigator.of(context).pop(_ExercisePickerResult(ex));
             },
@@ -764,7 +763,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
               final exercise = exercises[index];
               return ListTile(
                 title: Text(exercise.name),
-                subtitle: Text(exercise.muscleGroup.name),
+                subtitle: Text(exercise.muscleGroups.join(', ')),
                 onTap: () => Navigator.of(context).pop(exercise),
               );
             },
@@ -1345,7 +1344,7 @@ Future<void> showWorkoutSummaryDialog(BuildContext context, {
   for (final ex in exercises) {
     final exercise = await isar.exercises.filter().nameEqualTo(ex.name).findFirst();
     if (exercise != null) {
-      muscleGroups.add(exercise.muscleGroup.name);
+      muscleGroups.addAll(exercise.muscleGroups);
     }
     for (final set in ex.sets) {
       totalPounds += set.reps * set.weight;
@@ -1386,7 +1385,7 @@ class WorkoutSummaryPage extends StatelessWidget {
     for (final ex in completedWorkout.exercises) {
       final exercise = await isar.exercises.filter().nameEqualTo(ex.name).findFirst();
       if (exercise != null) {
-        muscleGroups.add(exercise.muscleGroup.name);
+        muscleGroups.addAll(exercise.muscleGroups);
       }
     }
     return muscleGroups;

@@ -17,11 +17,8 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   static const List<Widget> _pages = <Widget>[
-    WorkoutPage(), // Workout first
-    BmiRmrPage(),
+    WorkoutsPage(), // Workout first
     MacrosPage(), // Add the new page
-    WeightTrackingPage(),
-    MacrosPage(),
     CombinedStatsPage(),
     ProfilePage(),
   ];
@@ -54,7 +51,7 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.calculate_outlined),
             activeIcon: Icon(Icons.calculate),
-            label: 'BMI/RMR',
+            label: 'Workout',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.pie_chart_outline),

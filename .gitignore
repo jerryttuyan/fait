@@ -152,3 +152,11 @@ out/
 
 isar_schema.json
 **/*.g.dart
+
+# Flutter iOS generated files
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
+ios/Flutter/Flutter.podspec
+.flutter-plugins-dependencies
+ios/.symlinks/
+**/ephemeral/

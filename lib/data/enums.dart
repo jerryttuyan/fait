@@ -28,15 +28,17 @@ enum EquipmentType {
 }
 
 enum MuscleGroup {
-  chest,
+  abs,
   back,
+  biceps,
+  chest,
+  glutes,
+  hamstrings,
+  quadriceps,
   shoulders,
-  arms,
-  legs,
-  core,
-  fullBody,
+  triceps,
+  lowerBack,
   cardio,
-  other,
 }
 
 enum SplitType {

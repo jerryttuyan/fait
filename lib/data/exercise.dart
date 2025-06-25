@@ -10,8 +10,7 @@ class Exercise {
 
   late String name;
 
-  @enumerated
-  MuscleGroup muscleGroup = MuscleGroup.other;
+  late List<String> muscleGroups;
 
   late String primaryMuscle;
 
@@ -23,4 +22,11 @@ class Exercise {
 
   String? description;
   String? imageUrl;
+
+  @ignore
+  List<MuscleGroup> get muscleGroupEnums =>
+      muscleGroups.map((e) => MuscleGroup.values.firstWhere((g) => g.name == e)).toList();
+  @ignore
+  set muscleGroupEnums(List<MuscleGroup> groups) =>
+      muscleGroups = groups.map((g) => g.name).toList();
 } 
