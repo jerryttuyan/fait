@@ -14,7 +14,7 @@ enum ActivityLevel {
   extraActive,
 }
 
-enum PushPullType { push, pull, legs, other }
+enum PushPullType { push, pull, legs, fullBody, cardio, other }
 
 enum EquipmentType {
   barbell,
@@ -35,6 +35,7 @@ enum MuscleGroup {
   legs,
   core,
   fullBody,
+  cardio,
   other,
 }
 

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../data/enums.dart';
 import '../../data/exercise.dart';
 import '../../data/workout.dart';
+import '../../data/exercise_suggestions.dart';
 import '../../main.dart';
 import 'dart:async';
 import 'package:assets_audio_player/assets_audio_player.dart';
@@ -26,11 +27,118 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
       builder: (context) => const _ExercisePickerModal(),
     );
     if (result != null) {
+      // Get weight suggestion for this exercise
+      final suggestion = await ExerciseSuggestionService.getWeightSuggestion(
+        isarInstance,
+        result.exercise.name,
+        10, // Default target reps
+      );
+      
       setState(() {
-        _exercises.add(_WorkoutExerciseDraft(result.exercise.name, [
-          _WorkoutSetDraft(reps: 10, weight: 0),
-        ]));
+        _exercises.add(_WorkoutExerciseDraft(result.exercise.name, 
+          List.generate(
+            suggestion.suggestedSets,
+            (index) => _WorkoutSetDraft(
+              reps: 10, 
+              weight: suggestion.suggestedWeight,
+            ),
+          ),
+        ));
       });
+      
+      // Show suggestion info if available
+      if (suggestion.confidence > 0.0 && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Suggested: ${suggestion.suggestedWeight.toInt()} lbs × ${suggestion.suggestedSets} sets (${suggestion.reason})'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    }
+  }
+
+  void _loadPreset() async {
+    final templates = await isar.workoutTemplates.where().findAll();
+    
+    if (templates.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No workout presets found. Complete a workout and save it as a preset first.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
+    final selectedTemplate = await showDialog<WorkoutTemplate>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Load Workout Preset'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: templates.length,
+            itemBuilder: (context, index) {
+              final template = templates[index];
+              return ListTile(
+                title: Text(template.name),
+                subtitle: Text('${template.exercises.length} exercises'),
+                onTap: () => Navigator.of(context).pop(template),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedTemplate != null) {
+      setState(() {
+        _exercises.clear();
+      });
+      
+      // Load exercises with smart weight suggestions
+      for (final exercise in selectedTemplate.exercises) {
+        final suggestion = await ExerciseSuggestionService.getWeightSuggestion(
+          isarInstance,
+          exercise.name,
+          exercise.reps,
+        );
+        
+        // Use suggested sets if available, otherwise use template sets
+        final numberOfSets = suggestion.suggestedSets > 0 ? suggestion.suggestedSets : exercise.sets;
+        
+        final sets = List.generate(
+          numberOfSets,
+          (index) => _WorkoutSetDraft(
+            reps: exercise.reps,
+            weight: suggestion.suggestedWeight > 0 ? suggestion.suggestedWeight : exercise.weight,
+          ),
+        );
+        
+        setState(() {
+          _exercises.add(_WorkoutExerciseDraft(exercise.name, sets));
+        });
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Loaded preset: ${selectedTemplate.name} with smart weight suggestions'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -77,7 +185,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: null, // Disabled for now
+                    onPressed: _loadPreset,
                     child: const Text('Presets'),
                   ),
                 ),
@@ -129,11 +237,20 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                     ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Add Exercise'),
-              onPressed: _addExercise,
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Exercise'),
+                    onPressed: _addExercise,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -231,24 +348,65 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
               const Center(child: Text('No exercises found.'))
             else
               Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final ex = filtered[index];
-                    return ListTile(
-                      title: Text(ex.name),
-                      subtitle: Text(ex.muscleGroup.name),
-                      onTap: () {
-                        Navigator.of(context).pop(_ExercisePickerResult(ex));
-                      },
-                    );
-                  },
-                ),
+                child: _byMuscle 
+                  ? _buildGroupedExerciseList(filtered)
+                  : _buildSimpleExerciseList(filtered),
               ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSimpleExerciseList(List<Exercise> exercises) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        final ex = exercises[index];
+        return ListTile(
+          title: Text(ex.name),
+          subtitle: Text(ex.muscleGroup.name),
+          onTap: () {
+            Navigator.of(context).pop(_ExercisePickerResult(ex));
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupedExerciseList(List<Exercise> exercises) {
+    // Group exercises by muscle group
+    final grouped = <MuscleGroup, List<Exercise>>{};
+    for (final ex in exercises) {
+      grouped.putIfAbsent(ex.muscleGroup, () => []).add(ex);
+    }
+
+    // Sort muscle groups alphabetically
+    final sortedGroups = grouped.keys.toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: sortedGroups.length,
+      itemBuilder: (context, groupIndex) {
+        final muscleGroup = sortedGroups[groupIndex];
+        final groupExercises = grouped[muscleGroup]!;
+        
+        return ExpansionTile(
+          title: Text(
+            muscleGroup.name.toUpperCase(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          children: groupExercises.map((ex) => ListTile(
+            title: Text(ex.name),
+            subtitle: Text(ex.equipment.name),
+            onTap: () {
+              Navigator.of(context).pop(_ExercisePickerResult(ex));
+            },
+          )).toList(),
+        );
+      },
     );
   }
 }
@@ -338,10 +496,17 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
     }
     final completedWorkout = CompletedWorkout()
       ..timestamp = DateTime.now()
-      ..exercises = completedExercises;
+      ..exercises = completedExercises
+      ..durationSeconds = _elapsed.inSeconds;
+    
+    print('Saving completed workout with ${completedExercises.length} exercises');
+    
     await isarInstance.writeTxn(() async {
       await isarInstance.completedWorkouts.put(completedWorkout);
     });
+    
+    print('Completed workout saved with ID: ${completedWorkout.id}');
+    
     if (context.mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -362,6 +527,43 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
         title: const Text('Workout In Progress'),
         backgroundColor: Colors.deepPurple,
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) async {
+              switch (value) {
+                case 'add_exercise':
+                  await _showAddExerciseModal();
+                  break;
+                case 'edit_exercises':
+                  await _showEditExercisesModal();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'add_exercise',
+                child: Row(
+                  children: [
+                    Icon(Icons.add, color: Colors.deepPurple),
+                    SizedBox(width: 8),
+                    Text('Add Exercise'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'edit_exercises',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, color: Colors.deepPurple),
+                    SizedBox(width: 8),
+                    Text('Edit Exercises'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       backgroundColor: Colors.grey[100],
       body: SafeArea(
@@ -459,12 +661,53 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    widget.exercises[index].exerciseName,
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.deepPurple[700],
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          widget.exercises[index].exerciseName,
+                                          style: theme.textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.deepPurple[700],
+                                          ),
+                                        ),
+                                      ),
+                                      PopupMenuButton<String>(
+                                        icon: const Icon(Icons.more_vert, size: 20),
+                                        onSelected: (value) async {
+                                          switch (value) {
+                                            case 'edit_sets':
+                                              await _showEditSetsModal(index);
+                                              break;
+                                            case 'remove_exercise':
+                                              _removeExercise(index);
+                                              break;
+                                          }
+                                        },
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(
+                                            value: 'edit_sets',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.edit, color: Colors.deepPurple, size: 16),
+                                                SizedBox(width: 8),
+                                                Text('Edit Sets'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuItem(
+                                            value: 'remove_exercise',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete, color: Colors.red, size: 16),
+                                                SizedBox(width: 8),
+                                                Text('Remove Exercise'),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
                                   ...widget.exercises[index].sets.asMap().entries.map((entry) {
@@ -505,6 +748,140 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
       ),
     );
   }
+
+  Future<void> _showAddExerciseModal() async {
+    final exercises = await isar.exercises.where().findAll();
+    final selectedExercise = await showDialog<Exercise>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Exercise'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: ListView.builder(
+            itemCount: exercises.length,
+            itemBuilder: (context, index) {
+              final exercise = exercises[index];
+              return ListTile(
+                title: Text(exercise.name),
+                subtitle: Text(exercise.muscleGroup.name),
+                onTap: () => Navigator.of(context).pop(exercise),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedExercise != null) {
+      setState(() {
+        final newExercise = _WorkoutExerciseDraft(
+          selectedExercise.name,
+          [
+            _WorkoutSetDraft(reps: 10, weight: 0),
+            _WorkoutSetDraft(reps: 10, weight: 0),
+            _WorkoutSetDraft(reps: 10, weight: 0),
+          ],
+        );
+        widget.exercises.add(newExercise);
+        _completedSets[widget.exercises.length - 1] = [];
+      });
+    }
+  }
+
+  Future<void> _showEditExercisesModal() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Exercises'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: ListView.builder(
+            itemCount: widget.exercises.length,
+            itemBuilder: (context, index) {
+              final exercise = widget.exercises[index];
+              return ListTile(
+                title: Text(exercise.exerciseName),
+                subtitle: Text('${exercise.sets.length} sets'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    setState(() {
+                      widget.exercises.removeAt(index);
+                      _completedSets.remove(index);
+                      // Shift remaining keys
+                      final newCompletedSets = <int, List<CompletedSet>>{};
+                      for (int i = 0; i < widget.exercises.length; i++) {
+                        if (i < index) {
+                          newCompletedSets[i] = _completedSets[i] ?? [];
+                        } else {
+                          newCompletedSets[i] = _completedSets[i + 1] ?? [];
+                        }
+                      }
+                      _completedSets.clear();
+                      _completedSets.addAll(newCompletedSets);
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showEditSetsModal(int exerciseIndex) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _EditSetsModal(
+        exercise: widget.exercises[exerciseIndex],
+        onChanged: () {
+          setState(() {
+            // Update completed sets if we removed sets that were already completed
+            final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+            final newSetCount = widget.exercises[exerciseIndex].sets.length;
+            if (completedCount > newSetCount) {
+              _completedSets[exerciseIndex] = _completedSets[exerciseIndex]!.take(newSetCount).toList();
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  void _removeExercise(int index) {
+    setState(() {
+      widget.exercises.removeAt(index);
+      _completedSets.remove(index);
+      // Shift remaining keys
+      final newCompletedSets = <int, List<CompletedSet>>{};
+      for (int i = 0; i < widget.exercises.length; i++) {
+        if (i < index) {
+          newCompletedSets[i] = _completedSets[i] ?? [];
+        } else {
+          newCompletedSets[i] = _completedSets[i + 1] ?? [];
+        }
+      }
+      _completedSets.clear();
+      _completedSets.addAll(newCompletedSets);
+    });
+  }
 }
 
 class ExerciseInProgressPage extends StatefulWidget {
@@ -536,6 +913,7 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
     final oldReps = sets[index].reps;
     setState(() {
       sets[index].reps = newReps;
+      // Cascade to identical sets below
       for (int i = index + 1; i < sets.length; i++) {
         if (sets[i].reps == oldReps) {
           sets[i].reps = newReps;
@@ -548,6 +926,7 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
     final oldWeight = sets[index].weight;
     setState(() {
       sets[index].weight = newWeight;
+      // Cascade to identical sets below
       for (int i = index + 1; i < sets.length; i++) {
         if (sets[i].weight == oldWeight) {
           sets[i].weight = newWeight;
@@ -784,107 +1163,173 @@ class _EditSetsModal extends StatefulWidget {
 
 class _EditSetsModalState extends State<_EditSetsModal> {
   late List<_WorkoutSetDraft> sets;
+  late List<TextEditingController> repsControllers;
+  late List<TextEditingController> weightControllers;
 
   @override
   void initState() {
     super.initState();
     sets = widget.exercise.sets;
+    // Initialize controllers
+    repsControllers = sets.map((set) => TextEditingController(text: set.reps.toString())).toList();
+    weightControllers = sets.map((set) => TextEditingController(text: set.weight.toString())).toList();
+  }
+
+  @override
+  void dispose() {
+    // Dispose controllers
+    for (final controller in repsControllers) {
+      controller.dispose();
+    }
+    for (final controller in weightControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _updateReps(int index, int newReps) {
+    final oldReps = sets[index].reps;
+    setState(() {
+      sets[index].reps = newReps;
+      // Cascade to identical sets below
+      for (int i = index + 1; i < sets.length; i++) {
+        if (sets[i].reps == oldReps) {
+          sets[i].reps = newReps;
+          // Update the controller text to reflect the change
+          repsControllers[i].text = newReps.toString();
+        }
+      }
+    });
+    widget.onChanged();
+  }
+
+  void _updateWeight(int index, double newWeight) {
+    final oldWeight = sets[index].weight;
+    setState(() {
+      sets[index].weight = newWeight;
+      // Cascade to identical sets below
+      for (int i = index + 1; i < sets.length; i++) {
+        if (sets[i].weight == oldWeight) {
+          sets[i].weight = newWeight;
+          // Update the controller text to reflect the change
+          weightControllers[i].text = newWeight.toString();
+        }
+      }
+    });
+    widget.onChanged();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Edit Sets', style: Theme.of(context).textTheme.titleMedium),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ListView.builder(
-            shrinkWrap: true,
-            itemCount: sets.length,
-            itemBuilder: (context, index) {
-              final set = sets[index];
-              return Row(
-                children: [
-                  Text('Set ${index + 1}'),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: set.reps.toString(),
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Reps'),
-                      onChanged: (val) {
-                        final reps = int.tryParse(val) ?? 0;
-                        setState(() => set.reps = reps);
-                        widget.onChanged();
-                      },
-                    ),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Edit Sets', style: Theme.of(context).textTheme.titleMedium),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: sets.length,
+              itemBuilder: (context, index) {
+                final set = sets[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Text('Set ${index + 1}'),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: repsControllers[index],
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Reps'),
+                          onChanged: (val) {
+                            final reps = int.tryParse(val) ?? 0;
+                            _updateReps(index, reps);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: weightControllers[index],
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Weight (lbs)'),
+                          onChanged: (val) {
+                            final weight = int.tryParse(val) ?? 0;
+                            _updateWeight(index, weight.toDouble());
+                          },
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: sets.length > 1
+                            ? () {
+                                setState(() {
+                                  sets.removeAt(index);
+                                  repsControllers[index].dispose();
+                                  weightControllers[index].dispose();
+                                  repsControllers.removeAt(index);
+                                  weightControllers.removeAt(index);
+                                });
+                                widget.onChanged();
+                              }
+                            : null,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: set.weight.toString(),
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Weight (lbs)'),
-                      onChanged: (val) {
-                        final weight = int.tryParse(val) ?? 0;
-                        setState(() => set.weight = weight.toDouble());
-                        widget.onChanged();
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: sets.length > 1
-                        ? () {
-                            setState(() => sets.removeAt(index));
-                            widget.onChanged();
-                          }
-                        : null,
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Set'),
-                onPressed: () {
-                  if (sets.isNotEmpty) {
-                    final last = sets.last;
-                    setState(() => sets.add(_WorkoutSetDraft(reps: last.reps, weight: last.weight)));
-                  } else {
-                    setState(() => sets.add(_WorkoutSetDraft(reps: 10, weight: 0)));
-                  }
-                  widget.onChanged();
-                },
-              ),
-              const Spacer(),
-              ElevatedButton(
-                child: const Text('Done'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Set'),
+                  onPressed: () {
+                    if (sets.isNotEmpty) {
+                      final last = sets.last;
+                      setState(() {
+                        sets.add(_WorkoutSetDraft(reps: last.reps, weight: last.weight));
+                        repsControllers.add(TextEditingController(text: last.reps.toString()));
+                        weightControllers.add(TextEditingController(text: last.weight.toString()));
+                      });
+                    } else {
+                      setState(() {
+                        sets.add(_WorkoutSetDraft(reps: 10, weight: 0));
+                        repsControllers.add(TextEditingController(text: '10'));
+                        weightControllers.add(TextEditingController(text: '0'));
+                      });
+                    }
+                    widget.onChanged();
+                  },
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  child: const Text('Done'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1018,7 +1463,7 @@ class WorkoutSummaryPage extends StatelessWidget {
                       minimumSize: const Size.fromHeight(48),
                     ),
                     onPressed: () {
-                      Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == '/workouts');
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                   ),
                 ),

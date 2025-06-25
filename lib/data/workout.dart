@@ -39,6 +39,7 @@ class CompletedWorkout {
   Id id = Isar.autoIncrement;
   late DateTime timestamp;
   late List<CompletedExercise> exercises;
+  int? durationSeconds; // Duration in seconds
 }
 
 @embedded
