@@ -48,7 +48,6 @@ dependencies:
   fl_chart: ^0.68.0
   intl: ^0.18.1
   async: ^2.11.0
-  assets_audio_player: ^3.0.6
 
 dev_dependencies:
   flutter_test:
@@ -109,5 +108,5 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-  assets:
-    - assets/beep.mp3
+  # assets:
+  #   - assets/beep.mp3

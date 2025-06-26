@@ -7,7 +7,6 @@ import '../../data/workout.dart';
 import '../../data/exercise_suggestions.dart';
 import '../../main.dart';
 import 'dart:async';
-import 'package:assets_audio_player/assets_audio_player.dart';
 
 class WorkoutBuilderPage extends StatefulWidget {
   const WorkoutBuilderPage({Key? key}) : super(key: key);
