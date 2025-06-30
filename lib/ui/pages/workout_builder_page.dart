@@ -11,16 +11,18 @@ import '../../utils/workout_generator.dart';
 import '../../utils/recovery_calculator.dart';
 import '../../main.dart';
 import 'dart:async';
+import '../../data/workout_draft.dart';
 
 class WorkoutBuilderPage extends StatefulWidget {
-  const WorkoutBuilderPage({Key? key}) : super(key: key);
+  final List<WorkoutExerciseDraft>? initialExercises;
+  const WorkoutBuilderPage({Key? key, this.initialExercises}) : super(key: key);
 
   @override
   State<WorkoutBuilderPage> createState() => _WorkoutBuilderPageState();
 }
 
 class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
-  final List<_WorkoutExerciseDraft> _exercises = [];
+  late final List<WorkoutExerciseDraft> _exercises;
   final DateTime _workoutDate = DateTime.now();
   SplitType _selectedSplitType = SplitType.other;
   bool _isGenerating = false;
@@ -28,6 +30,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
   @override
   void initState() {
     super.initState();
+    _exercises = widget.initialExercises != null ? List<WorkoutExerciseDraft>.from(widget.initialExercises!) : [];
     _determineOptimalSplit();
   }
 
@@ -96,10 +99,10 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
       );
       
       setState(() {
-        _exercises.add(_WorkoutExerciseDraft(result.exercise.name, 
+        _exercises.add(WorkoutExerciseDraft(result.exercise.name, 
           List.generate(
             suggestion.suggestedSets,
-            (index) => _WorkoutSetDraft(
+            (index) => WorkoutSetDraft(
               reps: 10, 
               weight: suggestion.suggestedWeight,
             ),
@@ -181,14 +184,14 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
         
         final sets = List.generate(
           numberOfSets,
-          (index) => _WorkoutSetDraft(
+          (index) => WorkoutSetDraft(
             reps: exercise.reps,
             weight: suggestion.suggestedWeight > 0 ? suggestion.suggestedWeight : exercise.weight,
           ),
         );
         
         setState(() {
-          _exercises.add(_WorkoutExerciseDraft(exercise.name, sets));
+          _exercises.add(WorkoutExerciseDraft(exercise.name, sets));
         });
       }
 
@@ -208,7 +211,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
     return lastWeightEntry?.weight;
   }
 
-  Future<void> _showEditSetsModal(BuildContext context, _WorkoutExerciseDraft exercise, void Function(void Function()) setStateParent) async {
+  Future<void> _showEditSetsModal(BuildContext context, WorkoutExerciseDraft exercise, void Function(void Function()) setStateParent) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -225,8 +228,8 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => WorkoutInProgressPage(
-          exercises: _exercises.map((e) => _WorkoutExerciseDraft(e.exerciseName, [
-            ...e.sets.map((s) => _WorkoutSetDraft(reps: s.reps, weight: s.weight)),
+          exercises: _exercises.map((e) => WorkoutExerciseDraft(e.exerciseName, [
+            ...e.sets.map((s) => WorkoutSetDraft(reps: s.reps, weight: s.weight)),
           ])).toList(),
         ),
       ),
@@ -283,12 +286,12 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                                 _exercises.clear();
                                 // Convert generated exercises to draft format
                                 for (final generatedExercise in generatedWorkout.exercises) {
-                                  final sets = generatedExercise.sets.map((set) => _WorkoutSetDraft(
+                                  final sets = generatedExercise.sets.map((set) => WorkoutSetDraft(
                                     reps: set.reps,
                                     weight: set.weight,
                                   )).toList();
                                   
-                                  _exercises.add(_WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
+                                  _exercises.add(WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
                                 }
                               });
 
@@ -369,12 +372,12 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                                 _exercises.clear();
                                 // Convert generated exercises to draft format
                                 for (final generatedExercise in generatedWorkout.exercises) {
-                                  final sets = generatedExercise.sets.map((set) => _WorkoutSetDraft(
+                                  final sets = generatedExercise.sets.map((set) => WorkoutSetDraft(
                                     reps: set.reps,
                                     weight: set.weight,
                                   )).toList();
                                   
-                                  _exercises.add(_WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
+                                  _exercises.add(WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
                                 }
                               });
 
@@ -734,27 +737,8 @@ class _ExercisePickerResult {
   _ExercisePickerResult(this.exercise);
 }
 
-// Temporary draft class for sets in the builder
-class _WorkoutSetDraft {
-  int reps;
-  double weight;
-  _WorkoutSetDraft({required this.reps, required this.weight});
-}
-
-// Temporary draft class for exercises in the builder
-class _WorkoutExerciseDraft {
-  final String exerciseName;
-  List<_WorkoutSetDraft> sets;
-  _WorkoutExerciseDraft(this.exerciseName, this.sets);
-
-  String get setsSummary => sets.map((s) => '${s.reps} x ${s.weight} lbs').join(', ');
-}
-
-// Helper to get isar instance (assumes you have a global isar or use locator)
-Isar get isarInstance => isar;
-
 class WorkoutInProgressPage extends StatefulWidget {
-  final List<_WorkoutExerciseDraft> exercises;
+  final List<WorkoutExerciseDraft> exercises;
   const WorkoutInProgressPage({required this.exercises, Key? key}) : super(key: key);
 
   @override
@@ -1099,12 +1083,12 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
 
     if (selectedExercise != null) {
       setState(() {
-        final newExercise = _WorkoutExerciseDraft(
+        final newExercise = WorkoutExerciseDraft(
           selectedExercise.name,
           [
-            _WorkoutSetDraft(reps: 10, weight: 0),
-            _WorkoutSetDraft(reps: 10, weight: 0),
-            _WorkoutSetDraft(reps: 10, weight: 0),
+            WorkoutSetDraft(reps: 10, weight: 0),
+            WorkoutSetDraft(reps: 10, weight: 0),
+            WorkoutSetDraft(reps: 10, weight: 0),
           ],
         );
         widget.exercises.add(newExercise);
@@ -1203,7 +1187,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
 }
 
 class ExerciseInProgressPage extends StatefulWidget {
-  final _WorkoutExerciseDraft exercise;
+  final WorkoutExerciseDraft exercise;
   final List<CompletedSet> initialCompletedSets;
   const ExerciseInProgressPage({required this.exercise, this.initialCompletedSets = const [], Key? key}) : super(key: key);
 
@@ -1212,7 +1196,7 @@ class ExerciseInProgressPage extends StatefulWidget {
 }
 
 class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
-  late List<_WorkoutSetDraft> sets;
+  late List<WorkoutSetDraft> sets;
   late List<bool> completed;
   late List<CompletedSet> loggedSets;
   int currentSet = 0;
@@ -1471,7 +1455,7 @@ class _RestTimerModalState extends State<_RestTimerModal> {
 }
 
 class _EditSetsModal extends StatefulWidget {
-  final _WorkoutExerciseDraft exercise;
+  final WorkoutExerciseDraft exercise;
   final VoidCallback onChanged;
   const _EditSetsModal({required this.exercise, required this.onChanged});
 
@@ -1480,7 +1464,7 @@ class _EditSetsModal extends StatefulWidget {
 }
 
 class _EditSetsModalState extends State<_EditSetsModal> {
-  late List<_WorkoutSetDraft> sets;
+  late List<WorkoutSetDraft> sets;
   late List<TextEditingController> repsControllers;
   late List<TextEditingController> weightControllers;
 
@@ -1625,13 +1609,13 @@ class _EditSetsModalState extends State<_EditSetsModal> {
                     if (sets.isNotEmpty) {
                       final last = sets.last;
                       setState(() {
-                        sets.add(_WorkoutSetDraft(reps: last.reps, weight: last.weight));
+                        sets.add(WorkoutSetDraft(reps: last.reps, weight: last.weight));
                         repsControllers.add(TextEditingController(text: last.reps.toString()));
                         weightControllers.add(TextEditingController(text: last.weight.toString()));
                       });
                     } else {
                       setState(() {
-                        sets.add(_WorkoutSetDraft(reps: 10, weight: 0));
+                        sets.add(WorkoutSetDraft(reps: 10, weight: 0));
                         repsControllers.add(TextEditingController(text: '10'));
                         weightControllers.add(TextEditingController(text: '0'));
                       });

@@ -14,6 +14,12 @@ enum ActivityLevel {
   extraActive,
 }
 
+enum Difficulty {
+  beginner,
+  intermediate,
+  advanced,
+}
+
 enum PushPullType { push, pull, legs, fullBody, cardio, other }
 
 enum EquipmentType {

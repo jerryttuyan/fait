@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'data/user_profile.dart';
 import 'data/weight_entry.dart';
 import 'ui/pages/main_screen.dart';
@@ -11,6 +12,8 @@ import 'data/workout_exercise.dart';
 import 'data/workout_set.dart';
 import 'data/exercise_catalog.dart';
 import 'data/exercise_suggestions.dart';
+import 'utils/ai_service.dart';
+import 'config/api_config.dart';
 
 // Testing flag - set to true to force onboarding, false for normal behavior
 // When true: Always shows onboarding (will overwrite existing profile if one exists)
@@ -32,6 +35,23 @@ Future<void> clearAndReimportExercises() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables (optional - will use defaults if .env doesn't exist)
+  try {
+    await dotenv.load(fileName: ".env");
+    print('✅ Environment variables loaded successfully');
+  } catch (e) {
+    print('⚠️  No .env file found. Using default configuration.');
+    print('   To enable AI features, run: ./setup_ai.sh');
+    print('   Error details: $e');
+  }
+  
+  // Validate API configuration
+  ApiConfig.validateConfig();
+  
+  // Initialize AI service
+  AIService.initializeOpenAI();
+  
   final dir = await getApplicationDocumentsDirectory();
   isar = await Isar.open(
     [

@@ -5,6 +5,7 @@ import 'profile_page.dart';
 import 'weight_tracking_page.dart';
 import 'exercise_catalog_page.dart';
 import 'workouts_page.dart';
+import 'ai_coach_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
   static const List<Widget> _pages = <Widget>[
     WorkoutsPage(), // Workout first
     MacrosPage(), // Add the new page
+    AICoachPage(), // AI Coach page
     CombinedStatsPage(),
     ProfilePage(),
   ];
@@ -26,6 +28,7 @@ class _MainScreenState extends State<MainScreen> {
   static const List<String> _pageTitles = <String>[
     'Workout',
     'Macronutrient Plan',
+    'AI Coach',
     'Stats & Weight',
     'My Profile',
   ];
@@ -57,6 +60,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.pie_chart_outline),
             activeIcon: Icon(Icons.pie_chart),
             label: 'Macros',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy_outlined),
+            activeIcon: Icon(Icons.smart_toy),
+            label: 'AI Coach',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.insights_outlined),
