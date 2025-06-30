@@ -5,6 +5,10 @@ import '../../data/enums.dart';
 import '../../data/exercise.dart';
 import '../../data/workout.dart';
 import '../../data/exercise_suggestions.dart';
+import '../../data/user_profile.dart';
+import '../../data/weight_entry.dart';
+import '../../utils/workout_generator.dart';
+import '../../utils/recovery_calculator.dart';
 import '../../main.dart';
 import 'dart:async';
 
@@ -18,6 +22,64 @@ class WorkoutBuilderPage extends StatefulWidget {
 class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
   final List<_WorkoutExerciseDraft> _exercises = [];
   final DateTime _workoutDate = DateTime.now();
+  SplitType _selectedSplitType = SplitType.other;
+  bool _isGenerating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _determineOptimalSplit();
+  }
+
+  Future<void> _determineOptimalSplit() async {
+    final recentWorkouts = await isar.completedWorkouts
+        .where()
+        .sortByTimestampDesc()
+        .limit(10)
+        .findAll();
+    final recovery = await RecoveryCalculator.calculateRecovery(recentWorkouts);
+    
+    // Calculate recovery scores for each split type
+    final splitScores = <SplitType, double>{};
+    
+    // Push day recovery (chest, shoulders, triceps)
+    final pushRecovery = (recovery[MuscleGroup.chest] ?? 1.0) * 0.4 +
+                        (recovery[MuscleGroup.shoulders] ?? 1.0) * 0.4 +
+                        (recovery[MuscleGroup.triceps] ?? 1.0) * 0.2;
+    splitScores[SplitType.push] = pushRecovery;
+    
+    // Pull day recovery (back, biceps)
+    final pullRecovery = (recovery[MuscleGroup.back] ?? 1.0) * 0.7 +
+                        (recovery[MuscleGroup.biceps] ?? 1.0) * 0.3;
+    splitScores[SplitType.pull] = pullRecovery;
+    
+    // Legs day recovery (quads, hamstrings, glutes, lower back)
+    final legsRecovery = (recovery[MuscleGroup.quadriceps] ?? 1.0) * 0.3 +
+                        (recovery[MuscleGroup.hamstrings] ?? 1.0) * 0.3 +
+                        (recovery[MuscleGroup.glutes] ?? 1.0) * 0.2 +
+                        (recovery[MuscleGroup.lowerBack] ?? 1.0) * 0.2;
+    splitScores[SplitType.legs] = legsRecovery;
+    
+    // Upper body recovery (push + pull muscles)
+    final upperRecovery = (pushRecovery + pullRecovery) / 2;
+    splitScores[SplitType.upper] = upperRecovery;
+    
+    // Lower body recovery (same as legs)
+    splitScores[SplitType.lower] = legsRecovery;
+    
+    // Full body recovery (average of all major muscle groups)
+    final fullBodyRecovery = recovery.values.reduce((a, b) => a + b) / recovery.length;
+    splitScores[SplitType.fullBody] = fullBodyRecovery;
+    
+    // Set the optimal split type
+    if (mounted) {
+      setState(() {
+        _selectedSplitType = splitScores.entries
+            .reduce((a, b) => a.value > b.value ? a : b)
+            .key;
+      });
+    }
+  }
 
   void _addExercise() async {
     final result = await showModalBottomSheet<_ExercisePickerResult>(
@@ -141,6 +203,11 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
     }
   }
 
+  Future<double?> _getCurrentWeight() async {
+    final lastWeightEntry = await isar.weightEntrys.where().sortByDateDesc().findFirst();
+    return lastWeightEntry?.weight;
+  }
+
   Future<void> _showEditSetsModal(BuildContext context, _WorkoutExerciseDraft exercise, void Function(void Function()) setStateParent) async {
     await showModalBottomSheet(
       context: context,
@@ -179,6 +246,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
             // Date label at the very top
             Text(dateLabel, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
+            
             // Preset/Generate buttons
             Row(
               children: [
@@ -190,9 +258,185 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: null, // Disabled for now
-                    child: const Text('Generate'),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isGenerating ? null : () async {
+                            setState(() {
+                              _isGenerating = true;
+                            });
+                            
+                            try {
+                              // Get user profile for better workout generation
+                              final userProfile = await isar.userProfiles.get(1);
+                              final currentWeight = await _getCurrentWeight();
+                              
+                              // Generate recommended workout (optimal split based on recovery)
+                              final generatedWorkout = await WorkoutGenerator.generateWorkout(
+                                preferredSplit: null, // Let the generator choose optimal split
+                                targetExercises: 6,
+                                prioritizeRecovery: true,
+                              );
+
+                              setState(() {
+                                _exercises.clear();
+                                // Convert generated exercises to draft format
+                                for (final generatedExercise in generatedWorkout.exercises) {
+                                  final sets = generatedExercise.sets.map((set) => _WorkoutSetDraft(
+                                    reps: set.reps,
+                                    weight: set.weight,
+                                  )).toList();
+                                  
+                                  _exercises.add(_WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
+                                }
+                              });
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Generated recommended ${generatedWorkout.splitType.name} workout: ${generatedWorkout.reasoning}'),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error generating workout: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } finally {
+                              setState(() {
+                                _isGenerating = false;
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 48),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          child: _isGenerating 
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text('Generating...', style: TextStyle(color: Colors.white)),
+                                ],
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.auto_awesome, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Generate', style: TextStyle(color: Colors.white)),
+                                ],
+                              ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: PopupMenuButton<SplitType>(
+                          onSelected: (splitType) async {
+                            setState(() {
+                              _isGenerating = true;
+                            });
+                            
+                            try {
+                              // Get user profile for better workout generation
+                              final userProfile = await isar.userProfiles.get(1);
+                              final currentWeight = await _getCurrentWeight();
+                              
+                              final generatedWorkout = await WorkoutGenerator.generateWorkout(
+                                preferredSplit: splitType,
+                                targetExercises: 6,
+                                prioritizeRecovery: true,
+                              );
+
+                              setState(() {
+                                _exercises.clear();
+                                // Convert generated exercises to draft format
+                                for (final generatedExercise in generatedWorkout.exercises) {
+                                  final sets = generatedExercise.sets.map((set) => _WorkoutSetDraft(
+                                    reps: set.reps,
+                                    weight: set.weight,
+                                  )).toList();
+                                  
+                                  _exercises.add(_WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
+                                }
+                              });
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Generated ${splitType.name} workout: ${generatedWorkout.reasoning}'),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 4),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error generating workout: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } finally {
+                              setState(() {
+                                _isGenerating = false;
+                              });
+                            }
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.deepPurple,
+                              shape: BoxShape.circle,
+                              border: Border(
+                                left: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          itemBuilder: (context) => [
+                            ...SplitType.values.map((split) => PopupMenuItem(
+                              value: split,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _getSplitTypeIcon(split),
+                                    color: Colors.deepPurple,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(_getShortSplitTypeLabel(split)),
+                                ],
+                              ),
+                            )).toList(),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -262,6 +506,82 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
         ),
       ),
     );
+  }
+
+  String _getSplitTypeLabel(SplitType splitType) {
+    switch (splitType) {
+      case SplitType.push:
+        return 'Push (Chest, Shoulders, Triceps)';
+      case SplitType.pull:
+        return 'Pull (Back, Biceps)';
+      case SplitType.legs:
+        return 'Legs (Quads, Hamstrings, Glutes)';
+      case SplitType.upper:
+        return 'Upper Body (Push + Pull)';
+      case SplitType.lower:
+        return 'Lower Body (Legs)';
+      case SplitType.fullBody:
+        return 'Full Body';
+      case SplitType.other:
+        return 'Other';
+    }
+  }
+
+  IconData _getSplitTypeIcon(SplitType splitType) {
+    switch (splitType) {
+      case SplitType.push:
+        return Icons.trending_up;
+      case SplitType.pull:
+        return Icons.trending_down;
+      case SplitType.legs:
+        return Icons.directions_run;
+      case SplitType.upper:
+        return Icons.fitness_center;
+      case SplitType.lower:
+        return Icons.directions_walk;
+      case SplitType.fullBody:
+        return Icons.all_inclusive;
+      case SplitType.other:
+        return Icons.more_horiz;
+    }
+  }
+
+  String _getSplitTypeDescription(SplitType splitType) {
+    switch (splitType) {
+      case SplitType.push:
+        return 'Push day workout focusing on chest, shoulders, and triceps';
+      case SplitType.pull:
+        return 'Pull day workout focusing on back and biceps';
+      case SplitType.legs:
+        return 'Leg day workout focusing on quads, hamstrings, and glutes';
+      case SplitType.upper:
+        return 'Upper body workout focusing on push and pull muscles';
+      case SplitType.lower:
+        return 'Lower body workout focusing on legs';
+      case SplitType.fullBody:
+        return 'Full body workout focusing on all major muscle groups';
+      case SplitType.other:
+        return 'Custom workout type';
+    }
+  }
+
+  String _getShortSplitTypeLabel(SplitType splitType) {
+    switch (splitType) {
+      case SplitType.push:
+        return 'Push';
+      case SplitType.pull:
+        return 'Pull';
+      case SplitType.legs:
+        return 'Legs';
+      case SplitType.upper:
+        return 'Upper';
+      case SplitType.lower:
+        return 'Lower';
+      case SplitType.fullBody:
+        return 'Full';
+      case SplitType.other:
+        return 'Other';
+    }
   }
 }
 

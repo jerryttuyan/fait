@@ -77,7 +77,7 @@ class MyApp extends StatelessWidget {
       title: 'Fait',
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: Colors.blue, // This is your main app's theme
+        colorSchemeSeed: Colors.blue,
       ),
       home: const AppStartupPage(),
     );

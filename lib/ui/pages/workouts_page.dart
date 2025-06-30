@@ -265,6 +265,7 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
               // Header row with time and options
               Row(
                 children: [
+                  // Time on the left
                   Text(
                     _formatTime(workout.timestamp),
                     style: TextStyle(
@@ -273,21 +274,67 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const Spacer(),
-                  FutureBuilder<Set<String>>(
-                    future: _getMusclesWorked(workout),
-                    builder: (context, snapshot) {
-                      final muscles = snapshot.data ?? {};
-                      return Text(
-                        muscles.isEmpty ? 'Various' : muscles.join(', '),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      );
-                    },
+                  const SizedBox(width: 12),
+                  // Muscles in the middle (expanding)
+                  Expanded(
+                    child: FutureBuilder<Set<String>>(
+                      future: _getMusclesWorked(workout),
+                      builder: (context, snapshot) {
+                        final muscles = snapshot.data ?? {};
+                        if (muscles.isEmpty) {
+                          return const Text(
+                            'Various',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            textAlign: TextAlign.right,
+                          );
+                        }
+                        
+                        // Limit to first 3 muscles and add count if more
+                        final muscleList = muscles.toList();
+                        final displayMuscles = muscleList.take(3).toList();
+                        final hasMore = muscleList.length > 3;
+                        
+                        return Tooltip(
+                          message: muscles.join(', '),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  displayMuscles.join(', '),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                              if (hasMore) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  '+${muscleList.length - 3}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(width: 8),
+                  // Options button on the right
                   PopupMenuButton<String>(
                     icon: Icon(Icons.more_vert, color: Colors.grey[600]),
                     onSelected: (value) async {
