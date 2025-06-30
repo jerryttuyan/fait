@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'data/user_profile.dart';
-import 'data/weight_entry.dart';
-import 'ui/pages/main_screen.dart';
-import 'ui/pages/landing_page.dart';
-import 'data/exercise.dart';
-import 'data/workout.dart';
-import 'data/workout_exercise.dart';
-import 'data/workout_set.dart';
-import 'data/exercise_catalog.dart';
-import 'data/exercise_suggestions.dart';
+import 'package:provider/provider.dart';
+
+import 'data/ProfileData/user_profile.dart';
+import 'data/StatsData/weight_entry.dart';
+import 'ui/pages/MainPage/main_page.dart';
+import 'ui/pages/MainPage/landing_page.dart';
+import 'ui/pages/MainPage/login_page.dart';
+import 'ui/pages/MainPage/profile_info_page.dart';
+import 'data/ExcerciseData/exercise.dart';
+import 'data/WorkoutData/workout.dart';
+import 'data/WorkoutData/workout_exercise.dart';
+import 'data/WorkoutData/workout_set.dart';
+import 'data/ExcerciseData/exercise_catalog.dart';
+import 'data/ExcerciseData/exercise_suggestions.dart';
+import 'utils/app_settings.dart';
 
 // Testing flag - set to true to force onboarding, false for normal behavior
 // When true: Always shows onboarding (will overwrite existing profile if one exists)
@@ -33,38 +38,44 @@ Future<void> clearAndReimportExercises() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dir = await getApplicationDocumentsDirectory();
-  isar = await Isar.open(
-    [
-      WeightEntrySchema,
-      UserProfileSchema,
-      ExerciseSchema,
-      WorkoutSchema,
-      WorkoutExerciseSchema,
-      WorkoutTemplateSchema,
-      // WorkoutSet is embedded, no schema needed
-      CompletedWorkoutSchema,
-    ],
-    directory: dir.path,
-  );
+  isar = await Isar.open([
+    WeightEntrySchema,
+    UserProfileSchema,
+    ExerciseSchema,
+    WorkoutSchema,
+    WorkoutExerciseSchema,
+    WorkoutTemplateSchema,
+    // WorkoutSet is embedded, no schema needed
+    CompletedWorkoutSchema,
+  ], directory: dir.path);
 
   // Load or update exercises
   await _loadExercises();
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppSettings(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 Future<void> _loadExercises() async {
   // Check if exercises already exist in the database
   final existingExercises = await isar.exercises.where().findAll();
-  
+
   // If no exercises exist, populate with default exercises
   if (existingExercises.isEmpty) {
     await isar.writeTxn(() async {
       await isar.exercises.putAll(defaultExercises);
     });
-    print('Initialized exercise catalog with ${defaultExercises.length} exercises');
+    print(
+      'Initialized exercise catalog with ${defaultExercises.length} exercises',
+    );
   } else {
-    print('Exercise catalog already contains ${existingExercises.length} exercises');
+    print(
+      'Exercise catalog already contains ${existingExercises.length} exercises',
+    );
   }
 }
 
@@ -73,13 +84,44 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fait',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.blue, // This is your main app's theme
-      ),
-      home: const AppStartupPage(),
+    return Consumer<AppSettings>(
+      builder: (context, settings, _) {
+        ThemeMode themeMode;
+        switch (settings.themeMode) {
+          case AppThemeMode.light:
+            themeMode = ThemeMode.light;
+            break;
+          case AppThemeMode.dark:
+            themeMode = ThemeMode.dark;
+            break;
+          default:
+            themeMode = ThemeMode.system;
+        }
+        return MaterialApp(
+          title: 'Fait',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: Colors.blue,
+            brightness: Brightness.light,
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorSchemeSeed: Colors.blue,
+            brightness: Brightness.dark,
+          ),
+          themeMode: themeMode,
+          home: const AppStartupPage(),
+          routes: {
+            '/login': (context) => const LoginPage(),
+            '/profile_info': (context) {
+              final username =
+                  ModalRoute.of(context)?.settings.arguments as String? ?? '';
+              return ProfileInfoPage(username: username);
+            },
+            '/main': (context) => const MainScreen(),
+          },
+        );
+      },
     );
   }
 }
@@ -112,14 +154,14 @@ class _AppStartupPageState extends State<AppStartupPage> {
         });
         print('Cleared existing profile data for testing');
       }
-      
+
       setState(() {
         _hasProfile = false;
         _isLoading = false;
       });
       return;
     }
-    
+
     // Normal behavior: check if profile exists
     final profile = await isar.userProfiles.get(1);
     setState(() {
@@ -131,11 +173,7 @@ class _AppStartupPageState extends State<AppStartupPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return _hasProfile ? const MainScreen() : const FitnessAppLandingPage();

@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:fait/data/enums.dart';
+import 'package:fait/data/WorkoutData/enums.dart';
 
 /// BMI using imperial units
 double bmi({required double lb, required double inches}) =>

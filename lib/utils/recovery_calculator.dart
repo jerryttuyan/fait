@@ -1,6 +1,6 @@
-import '../data/enums.dart';
-import '../data/workout.dart';
-import '../data/exercise.dart';
+import '../data/WorkoutData/enums.dart';
+import '../data/WorkoutData/workout.dart';
+import '../data/ExcerciseData/exercise.dart';
 import 'dart:math';
 import 'package:isar/isar.dart';
 import '../main.dart';
@@ -9,10 +9,14 @@ class RecoveryCalculator {
   // --- Tunable parameters ---
   static const double baseFatigue = 0.15; // Base fatigue multiplier
   static const double intensityThreshold = 0.7; // 70% of max
-  static const double intensityMultiplier = 1.5; // Fatigue multiplier for intense sets
-  static const double referenceVolume = 1500.0; // Reference volume for normalization
-  static const double lowerBodyMultiplier = 1.2; // Lower body fatigue multiplier
-  static const double multiJointMultiplier = 1.1; // Multi-joint fatigue multiplier
+  static const double intensityMultiplier =
+      1.5; // Fatigue multiplier for intense sets
+  static const double referenceVolume =
+      1500.0; // Reference volume for normalization
+  static const double lowerBodyMultiplier =
+      1.2; // Lower body fatigue multiplier
+  static const double multiJointMultiplier =
+      1.1; // Multi-joint fatigue multiplier
   static const double defaultMultiplier = 1.0; // Default fatigue multiplier
   static const int upperBodyRecoveryHours = 48;
   static const int lowerBodyRecoveryHours = 72;
@@ -26,10 +30,12 @@ class RecoveryCalculator {
   }
 
   /// Returns a map of MuscleGroup to recovery percentage (0.0 to 1.0)
-  static Future<Map<MuscleGroup, double>> calculateRecovery(List<CompletedWorkout> workouts) async {
+  static Future<Map<MuscleGroup, double>> calculateRecovery(
+    List<CompletedWorkout> workouts,
+  ) async {
     final now = DateTime.now();
     final Map<MuscleGroup, double> fatigue = {
-      for (final group in MuscleGroup.values) group: 0.0
+      for (final group in MuscleGroup.values) group: 0.0,
     };
 
     for (final workout in workouts) {
@@ -39,7 +45,9 @@ class RecoveryCalculator {
         final maxWeight = await _getHeaviestSetWeight(exercise.name);
         final isLowerBody = _isLowerBody(muscleGroups);
         final isMultiJoint = _isMultiJoint(exercise.name);
-        final recoveryHours = isLowerBody ? lowerBodyRecoveryHours : upperBodyRecoveryHours;
+        final recoveryHours = isLowerBody
+            ? lowerBodyRecoveryHours
+            : upperBodyRecoveryHours;
         final k = _decayK(recoveryHours);
         final decay = exp(-k * hoursAgo);
         double typeMultiplier = defaultMultiplier;
@@ -47,7 +55,8 @@ class RecoveryCalculator {
         if (isMultiJoint) typeMultiplier *= multiJointMultiplier;
         for (final set in exercise.sets) {
           final setVolume = set.reps * set.weight;
-          double setFatigue = (setVolume / referenceVolume) * baseFatigue * typeMultiplier;
+          double setFatigue =
+              (setVolume / referenceVolume) * baseFatigue * typeMultiplier;
           if (maxWeight > 0 && set.weight >= intensityThreshold * maxWeight) {
             setFatigue *= intensityMultiplier;
           }
@@ -60,11 +69,18 @@ class RecoveryCalculator {
       }
     }
     // Recovery is 1.0 - fatigue
-    return fatigue.map((group, f) => MapEntry(group, (1.0 - f).clamp(0.0, 1.0)));
+    return fatigue.map(
+      (group, f) => MapEntry(group, (1.0 - f).clamp(0.0, 1.0)),
+    );
   }
 
-  static Future<List<MuscleGroup>> _getMuscleGroupsForExercise(String exerciseName) async {
-    final exercise = await isar.exercises.filter().nameEqualTo(exerciseName).findFirst();
+  static Future<List<MuscleGroup>> _getMuscleGroupsForExercise(
+    String exerciseName,
+  ) async {
+    final exercise = await isar.exercises
+        .filter()
+        .nameEqualTo(exerciseName)
+        .findFirst();
     if (exercise == null) return [];
     return exercise.muscleGroups
         .where((name) => MuscleGroup.values.any((g) => g.name == name))
@@ -92,20 +108,35 @@ class RecoveryCalculator {
   // --- Helpers for exercise type ---
   static bool _isLowerBody(List<MuscleGroup> groups) {
     // Lower body muscle groups
-    return groups.any((g) => [
-      MuscleGroup.glutes,
-      MuscleGroup.hamstrings,
-      MuscleGroup.quadriceps,
-      MuscleGroup.lowerBack
-    ].contains(g));
+    return groups.any(
+      (g) => [
+        MuscleGroup.glutes,
+        MuscleGroup.hamstrings,
+        MuscleGroup.quadriceps,
+        MuscleGroup.lowerBack,
+      ].contains(g),
+    );
   }
 
   static bool _isMultiJoint(String exerciseName) {
     // Simple heuristic: if exercise name contains common multi-joint terms
     final multiJointKeywords = [
-      'squat', 'deadlift', 'press', 'row', 'pull', 'clean', 'snatch', 'lunge', 'bench', 'dip', 'pushup', 'push-up', 'thruster', 'burpee'
+      'squat',
+      'deadlift',
+      'press',
+      'row',
+      'pull',
+      'clean',
+      'snatch',
+      'lunge',
+      'bench',
+      'dip',
+      'pushup',
+      'push-up',
+      'thruster',
+      'burpee',
     ];
     final lower = exerciseName.toLowerCase();
     return multiJointKeywords.any((kw) => lower.contains(kw));
   }
-} 
+}
