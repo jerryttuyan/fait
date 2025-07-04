@@ -50,7 +50,7 @@ void main() async {
   ApiConfig.validateConfig();
   
   // Initialize AI service
-  AIService.initializeOpenAI();
+  AIService.initializeAI();
   
   final dir = await getApplicationDocumentsDirectory();
   isar = await Isar.open(

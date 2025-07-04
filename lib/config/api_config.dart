@@ -60,19 +60,34 @@ class ApiConfig {
     }
   }
   
+  // Proxy Server Configuration
+  static String get proxyServerUrl {
+    try {
+      return dotenv.env['PROXY_SERVER_URL'] ?? '';
+    } catch (e) {
+      return '';
+    }
+  }
+  
   // Rate limiting
   static const int maxRequestsPerMinute = 60;
   static const Duration requestTimeout = Duration(seconds: 30);
   
   /// Validate that required environment variables are set
   static bool validateConfig() {
-    if (useOpenAI && openaiApiKey.isEmpty) {
-      print('⚠️  Warning: OpenAI is enabled but API key is not set in .env file');
-      print('   To fix this:');
-      print('   1. Run: ./setup_ai.sh');
-      print('   2. Edit .env file and add your OpenAI API key');
-      print('   3. Set USE_OPENAI=true');
-      return false;
+    if (useOpenAI) {
+      if (openaiApiKey.isEmpty && proxyServerUrl.isEmpty) {
+        print('⚠️  Warning: OpenAI is enabled but neither API key nor proxy server URL is set');
+        print('   To fix this:');
+        print('   1. Option A - Use proxy server (recommended for group projects):');
+        print('      - Deploy the proxy server to Render');
+        print('      - Add PROXY_SERVER_URL=https://your-app.onrender.com/api/ai to .env');
+        print('   2. Option B - Use direct OpenAI:');
+        print('      - Run: ./setup_ai.sh');
+        print('      - Edit .env file and add your OpenAI API key');
+        print('      - Set USE_OPENAI=true');
+        return false;
+      }
     }
     return true;
   }

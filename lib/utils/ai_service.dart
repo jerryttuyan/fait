@@ -1,5 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:dart_openai/dart_openai.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../data/user_profile.dart';
 import '../data/workout.dart';
 import '../data/weight_entry.dart';
@@ -16,9 +18,10 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
-  /// Initialize OpenAI (call this in main.dart)
-  static void initializeOpenAI() {
+  /// Initialize AI service (call this in main.dart)
+  static void initializeAI() {
     if (ApiConfig.useOpenAI) {
+      // Keep OpenAI initialization for fallback
       OpenAI.apiKey = ApiConfig.openaiApiKey;
       OpenAI.baseUrl = 'https://api.openai.com';
     }
@@ -144,32 +147,57 @@ Example workout plan format (do not mention this to the user):
       'content': prompt,
     });
 
-    // Use OpenAI for all questions
+    // Try Render proxy server first, fallback to direct OpenAI
     if (ApiConfig.useOpenAI) {
       try {
-        final completion = await OpenAI.instance.chat.create(
-          model: ApiConfig.defaultModel,
-          messages: messages.map((m) =>
-            OpenAIChatCompletionChoiceMessageModel(
-              role: m['role'] == 'system' ? OpenAIChatMessageRole.system :
-                    m['role'] == 'assistant' ? OpenAIChatMessageRole.assistant :
-                    OpenAIChatMessageRole.user,
-              content: [OpenAIChatCompletionChoiceMessageContentItemModel.text(m['content'])],
-            )
-          ).toList(),
-          maxTokens: ApiConfig.maxTokens,
-          temperature: ApiConfig.temperature,
+        // Try Render proxy server
+        final proxyResponse = await http.post(
+          Uri.parse(ApiConfig.proxyServerUrl),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'question': question,
+            'chatHistory': history,
+            'userContext': {
+              'contextString': contextString,
+            },
+          }),
         );
-        final contentList = completion.choices.first.message.content;
-        if (contentList != null && contentList.isNotEmpty && contentList.first.text != null) {
-          return contentList.first.text!;
+
+        if (proxyResponse.statusCode == 200) {
+          final data = jsonDecode(proxyResponse.body);
+          return data['response'] as String;
         } else {
-          return 'I apologize, but I couldn\'t generate a response right now. Please try again.';
+          print('Proxy server error: ${proxyResponse.statusCode}');
+          throw Exception('Proxy server failed');
         }
       } catch (e) {
-        print('OpenAI API error: $e');
-        // Fallback to hard-coded response
-        return await _getHardcodedResponse(question, context);
+        print('Proxy server error: $e');
+        // Fallback to direct OpenAI
+        try {
+          final completion = await OpenAI.instance.chat.create(
+            model: ApiConfig.defaultModel,
+            messages: messages.map((m) =>
+              OpenAIChatCompletionChoiceMessageModel(
+                role: m['role'] == 'system' ? OpenAIChatMessageRole.system :
+                      m['role'] == 'assistant' ? OpenAIChatMessageRole.assistant :
+                      OpenAIChatMessageRole.user,
+                content: [OpenAIChatCompletionChoiceMessageContentItemModel.text(m['content'])],
+              )
+            ).toList(),
+            maxTokens: ApiConfig.maxTokens,
+            temperature: ApiConfig.temperature,
+          );
+          final contentList = completion.choices.first.message.content;
+          if (contentList != null && contentList.isNotEmpty && contentList.first.text != null) {
+            return contentList.first.text!;
+          } else {
+            return 'I apologize, but I couldn\'t generate a response right now. Please try again.';
+          }
+        } catch (openaiError) {
+          print('OpenAI API error: $openaiError');
+          // Fallback to hard-coded response
+          return await _getHardcodedResponse(question, context);
+        }
       }
     }
     // Default to hard-coded response
