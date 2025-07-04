@@ -6,6 +6,8 @@ import 'package:fait/data/weight_entry.dart';
 import 'package:fait/main.dart';
 // Import for .firstWhereOrNull
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import 'package:fait/main.dart'; // For ThemeProvider
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -87,6 +89,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Card(
@@ -104,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Profile',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -210,6 +213,34 @@ class _ProfilePageState extends State<ProfilePage> {
                       label: const Text('Select Date'),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<ThemeMode>(
+                  value: themeProvider.themeMode,
+                  decoration: InputDecoration(
+                    labelText: 'App Theme',
+                    prefixIcon: const Icon(Icons.brightness_6),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: ThemeMode.system,
+                      child: Text('System Default'),
+                    ),
+                    DropdownMenuItem(
+                      value: ThemeMode.light,
+                      child: Text('Light'),
+                    ),
+                    DropdownMenuItem(
+                      value: ThemeMode.dark,
+                      child: Text('Dark'),
+                    ),
+                  ],
+                  onChanged: (mode) {
+                    if (mode != null) {
+                      themeProvider.setThemeMode(mode);
+                    }
+                  },
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(

@@ -179,16 +179,6 @@ class _AICoachPageState extends State<AICoachPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Coach'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Start New Chat',
-            onPressed: _resetChat,
-          ),
-        ],
-      ),
       body: Column(
         children: [
           Expanded(

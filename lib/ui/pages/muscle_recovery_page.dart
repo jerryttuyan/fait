@@ -92,10 +92,10 @@ class _MuscleRecoveryPageState extends State<MuscleRecoveryPage> {
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                               color: percent > 0.7
-                                  ? Colors.green
+                                  ? Theme.of(context).colorScheme.primary
                                   : percent > 0.4
-                                      ? Colors.orange
-                                      : Colors.red,
+                                      ? Theme.of(context).colorScheme.secondary
+                                      : Theme.of(context).colorScheme.error,
                             ),
                           ),
                         ],
@@ -104,13 +104,13 @@ class _MuscleRecoveryPageState extends State<MuscleRecoveryPage> {
                       LinearProgressIndicator(
                         value: percent,
                         minHeight: 12,
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           percent > 0.7
-                              ? Colors.green
+                              ? Theme.of(context).colorScheme.primary
                               : percent > 0.4
-                                  ? Colors.orange
-                                  : Colors.red,
+                                  ? Theme.of(context).colorScheme.secondary
+                                  : Theme.of(context).colorScheme.error,
                         ),
                       ),
                     ],

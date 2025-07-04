@@ -10,6 +10,8 @@ import 'data/workout.dart';
 import 'data/workout_exercise.dart';
 import 'data/exercise_catalog.dart';
 import 'utils/ai_service.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Testing flag - set to true to force onboarding, false for normal behavior
 // When true: Always shows onboarding (will overwrite existing profile if one exists)
@@ -27,6 +29,42 @@ Future<void> clearAndReimportExercises() async {
     await isar.exercises.putAll(defaultExercises);
   });
   print('Exercises cleared and reimported.');
+}
+
+// Theme management using Provider
+class ThemeProvider extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
+
+  ThemeProvider() {
+    _loadThemeMode();
+  }
+
+  void setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('theme_mode', mode.name);
+  }
+
+  Future<void> _loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final modeStr = prefs.getString('theme_mode');
+    if (modeStr != null) {
+      switch (modeStr) {
+        case 'light':
+          _themeMode = ThemeMode.light;
+          break;
+        case 'dark':
+          _themeMode = ThemeMode.dark;
+          break;
+        case 'system':
+        default:
+          _themeMode = ThemeMode.system;
+      }
+      notifyListeners();
+    }
+  }
 }
 
 void main() async {
@@ -56,7 +94,12 @@ void main() async {
   // Load or update exercises
   await _loadExercises();
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 Future<void> _loadExercises() async {
@@ -79,12 +122,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
       title: 'Fait',
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
+        brightness: Brightness.light,
       ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.blue,
+        brightness: Brightness.dark,
+      ),
+      themeMode: themeProvider.themeMode,
       home: const AppStartupPage(),
     );
   }

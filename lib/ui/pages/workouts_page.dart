@@ -103,24 +103,6 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workout History'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.self_improvement),
-            tooltip: 'Muscle Recovery',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const MuscleRecoveryPage(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
       body: FutureBuilder<List<CompletedWorkout>>(
         future: _workoutsFuture,
         builder: (context, snapshot) {
@@ -177,16 +159,16 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor.withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Theme.of(context).primaryColor.withOpacity(0.3),
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
                             ),
                           ),
                           child: Text(
                             _formatDate(date),
                             style: TextStyle(
-                              color: Theme.of(context).primaryColor,
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
@@ -212,16 +194,35 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'main_fab',
-        icon: const Icon(Icons.add),
-        label: const Text('Create Workout'),
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const WorkoutBuilderPage()),
-          );
-          _refreshWorkouts();
-        },
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: 'muscle_recovery_fab',
+            tooltip: 'Muscle Recovery',
+            child: const Icon(Icons.self_improvement),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MuscleRecoveryPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'main_fab',
+            icon: const Icon(Icons.add),
+            label: const Text('Create Workout'),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const WorkoutBuilderPage()),
+              );
+              _refreshWorkouts();
+            },
+          ),
+        ],
       ),
     );
   }
@@ -231,21 +232,12 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
     final exerciseCount = workout.exercises.length;
     final duration = _formatDuration(workout.durationSeconds);
     
-    return Container(
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(
@@ -269,7 +261,7 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                   Text(
                     _formatTime(workout.timestamp),
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),

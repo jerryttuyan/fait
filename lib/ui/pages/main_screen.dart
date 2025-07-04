@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'combined_stats_page.dart';
-import 'macros_page.dart';
 import 'profile_page.dart';
 import 'weight_tracking_page.dart';
 import 'exercise_catalog_page.dart';
 import 'workouts_page.dart';
 import 'ai_coach_page.dart';
+import 'body_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -19,17 +18,15 @@ class _MainScreenState extends State<MainScreen> {
 
   static const List<Widget> _pages = <Widget>[
     WorkoutsPage(), // Workout first
-    MacrosPage(), // Add the new page
+    BodyPage(), // Unified Body page
     AICoachPage(), // AI Coach page
-    CombinedStatsPage(),
     ProfilePage(),
   ];
 
   static const List<String> _pageTitles = <String>[
     'Workout',
-    'Macronutrient Plan',
+    'Body', // Unified Body page
     'AI Coach',
-    'Stats & Weight',
     'My Profile',
   ];
 
@@ -57,19 +54,14 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Workout',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart_outline),
-            activeIcon: Icon(Icons.pie_chart),
-            label: 'Macros',
+            icon: Icon(Icons.insights_outlined),
+            activeIcon: Icon(Icons.insights),
+            label: 'Body',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.smart_toy_outlined),
             activeIcon: Icon(Icons.smart_toy),
             label: 'AI Coach',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.insights_outlined),
-            activeIcon: Icon(Icons.insights),
-            label: 'Stats',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

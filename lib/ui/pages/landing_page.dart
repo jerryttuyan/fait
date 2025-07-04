@@ -200,7 +200,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.blue.shade900,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 30),
@@ -242,7 +242,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                     ? 'Select Birthday' 
                     : 'Birthday: ${DateFormat.yMMMd().format(_birthday!)}',
                   style: TextStyle(
-                    color: Colors.blue.shade800,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 16,
                   ),
                 ),
@@ -252,7 +252,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                 child: Text(
                   'Select Date',
                   style: TextStyle(
-                    color: Colors.blue.shade700,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -303,7 +303,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.blue.shade900,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 30),
@@ -417,7 +417,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.blue.shade900,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 30),
@@ -503,7 +503,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.blue.shade900,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 15),
@@ -512,7 +512,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 18,
-            color: Colors.blue.shade800,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
             height: 1.5,
           ),
         ),
@@ -581,7 +581,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                   Text(
                     'Step ${_currentStep + 1} of ${_steps.length}',
                     style: TextStyle(
-                      color: Colors.blue.shade800,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                       fontWeight: FontWeight.w600,
                     ),
                   ),

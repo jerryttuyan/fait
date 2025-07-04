@@ -320,8 +320,8 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
                             minimumSize: const Size(0, 48),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
@@ -332,18 +332,18 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                                   SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: null),
                                   ),
                                   SizedBox(width: 8),
-                                  Text('Generating...', style: TextStyle(color: Colors.white)),
+                                  Text('Generating...'),
                                 ],
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.auto_awesome, color: Colors.white),
-                                  SizedBox(width: 8),
-                                  Text('Generate', style: TextStyle(color: Colors.white)),
+                                  Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary),
+                                  const SizedBox(width: 8),
+                                  Text('Generate', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
                                 ],
                               ),
                         ),
@@ -409,15 +409,15 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.deepPurple,
+                              color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                               border: Border(
-                                left: BorderSide(color: Colors.white.withOpacity(0.3), width: 1),
+                                left: BorderSide(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.3), width: 1),
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.arrow_drop_down,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                               size: 20,
                             ),
                           ),
@@ -428,7 +428,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                                 children: [
                                   Icon(
                                     _getSplitTypeIcon(split),
-                                    color: Colors.deepPurple,
+                                    color: Theme.of(context).colorScheme.primary,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 12),
@@ -464,7 +464,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                                   .entries
                                   .map((entry) => Text(
                                         'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs',
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
                                       ))
                                   .toList(),
                             ),
@@ -491,8 +491,8 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                     label: const Text('Add Exercise'),
                     onPressed: _addExercise,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                   ),
                 ),
@@ -827,7 +827,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout In Progress'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
@@ -843,21 +843,21 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'add_exercise',
                 child: Row(
                   children: [
-                    Icon(Icons.add, color: Colors.deepPurple),
+                    Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
                     SizedBox(width: 8),
                     Text('Add Exercise'),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'edit_exercises',
                 child: Row(
                   children: [
-                    Icon(Icons.edit, color: Colors.deepPurple),
+                    Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
                     SizedBox(width: 8),
                     Text('Edit Exercises'),
                   ],
@@ -867,7 +867,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
           ),
         ],
       ),
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -877,7 +877,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                 _formatDuration(_elapsed),
                 style: theme.textTheme.displayMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  color: theme.colorScheme.primary,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 textAlign: TextAlign.center,
@@ -886,7 +886,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
             const SizedBox(height: 8),
             Text(
               'Elapsed Time',
-              style: theme.textTheme.titleMedium?.copyWith(color: Colors.deepPurple[300]),
+              style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary.withOpacity(0.7)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -894,7 +894,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 children: [
-                  Icon(Icons.fitness_center, color: Colors.deepPurple[300]),
+                  Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
                   const SizedBox(width: 8),
                   Text(
                     'Exercises',
@@ -970,7 +970,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                           widget.exercises[index].exerciseName,
                                           style: theme.textTheme.titleMedium?.copyWith(
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.deepPurple[700],
+                                            color: theme.colorScheme.primary,
                                           ),
                                         ),
                                       ),
@@ -987,17 +987,17 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                           }
                                         },
                                         itemBuilder: (context) => [
-                                          const PopupMenuItem(
+                                          PopupMenuItem(
                                             value: 'edit_sets',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit, color: Colors.deepPurple, size: 16),
+                                                Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 16),
                                                 SizedBox(width: 8),
                                                 Text('Edit Sets'),
                                               ],
                                             ),
                                           ),
-                                          const PopupMenuItem(
+                                          PopupMenuItem(
                                             value: 'remove_exercise',
                                             child: Row(
                                               children: [
@@ -1017,7 +1017,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                     return Text(
                                       'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs' + (isLogged ? '  ✔' : ''),
                                       style: theme.textTheme.bodySmall?.copyWith(
-                                        color: isLogged ? Colors.green[700] : Colors.grey[700],
+                                        color: isLogged ? Colors.green[700] : theme.colorScheme.onSurface.withOpacity(0.7),
                                         fontWeight: isLogged ? FontWeight.bold : FontWeight.normal,
                                       ),
                                     );
@@ -1038,7 +1038,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                 icon: const Icon(Icons.flag),
                 label: const Text('Finish Workout'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: _finishWorkout,
@@ -1340,7 +1340,7 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
                 icon: const Icon(Icons.check),
                 label: const Text('Log Set'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: completed[currentSet] ? Colors.grey : Colors.deepPurple,
+                  backgroundColor: completed[currentSet] ? Colors.grey : Theme.of(context).colorScheme.primary,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: completed[currentSet] ? null : _logCurrentSet,
@@ -1409,13 +1409,13 @@ class _RestTimerModalState extends State<_RestTimerModal> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Rest Timer', style: theme.textTheme.titleLarge?.copyWith(color: Colors.deepPurple)),
+          Text('Rest Timer', style: theme.textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
           const SizedBox(height: 16),
           Text(
             '${(secondsLeft ~/ 60).toString().padLeft(2, '0')}:${(secondsLeft % 60).toString().padLeft(2, '0')}',
             style: theme.textTheme.displayMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: finished ? Colors.green : Colors.deepPurple,
+              color: finished ? Colors.green : Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 16),
@@ -1423,7 +1423,7 @@ class _RestTimerModalState extends State<_RestTimerModal> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.remove_circle, color: Colors.deepPurple),
+                icon: Icon(Icons.remove_circle, color: Theme.of(context).colorScheme.primary),
                 iconSize: 36,
                 onPressed: secondsLeft > 10
                     ? () => setState(() => secondsLeft -= 10)
@@ -1431,7 +1431,7 @@ class _RestTimerModalState extends State<_RestTimerModal> {
               ),
               const SizedBox(width: 24),
               IconButton(
-                icon: const Icon(Icons.add_circle, color: Colors.deepPurple),
+                icon: Icon(Icons.add_circle, color: Theme.of(context).colorScheme.primary),
                 iconSize: 36,
                 onPressed: () => setState(() => secondsLeft += 10),
               ),
@@ -1442,7 +1442,7 @@ class _RestTimerModalState extends State<_RestTimerModal> {
             icon: const Icon(Icons.check),
             label: Text(finished ? 'Done' : 'Skip'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: finished ? Colors.green : Colors.deepPurple,
+              backgroundColor: finished ? Colors.green : Theme.of(context).colorScheme.primary,
               minimumSize: const Size.fromHeight(48),
             ),
             onPressed: () => Navigator.of(context).pop(),
@@ -1710,7 +1710,7 @@ class WorkoutSummaryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout Summary'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: FutureBuilder<Set<String>>(
         future: _getMusclesWorked(),
@@ -1761,7 +1761,7 @@ class WorkoutSummaryPage extends StatelessWidget {
                     icon: const Icon(Icons.check),
                     label: const Text('Done'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       minimumSize: const Size.fromHeight(48),
                     ),
                     onPressed: () {
