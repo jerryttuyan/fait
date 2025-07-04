@@ -1,6 +1,6 @@
 # fait 🏋️‍♂️📊
 
-A simple, cross-platform fitness tracker for logging workouts, tracking muscle recovery, and monitoring your progress.
+A simple, cross-platform fitness tracker with AI-powered coaching for logging workouts, tracking muscle recovery, and monitoring your progress.
 
 ## 🚀 Quick Start
 
@@ -17,19 +17,32 @@ A simple, cross-platform fitness tracker for logging workouts, tracking muscle r
    ```sh
    flutter pub run build_runner build --delete-conflicting-outputs
    ```
-4. **Ensure all platform files are present:**
-   ```sh
-   flutter create .
-   ```
-5. **(macOS/iOS only) Install CocoaPods dependencies:**
-   ```sh
-   cd macos # or ios
-   pod install
-   cd ..
-   ```
-6. **Run the app:**
+4. **Run the app:**
    ```sh
    flutter run
    ```
+
+**That's it!** AI features work automatically - no API keys or setup needed.
+
+## 🤖 AI Features
+
+- **AI Coach**: Ask questions about fitness, nutrition, and workouts
+- **Workout Generation**: Get personalized workout plans
+- **Fitness Advice**: Receive guidance on your fitness journey
+- **Nutrition Tips**: Get dietary recommendations
+
+## 📱 Core Features
+
+- **Workout Builder**: Create and save custom workouts
+- **Progress Tracking**: Log workouts and track progress
+- **Recovery Calculator**: See muscle recovery status
+- **Weight Tracking**: Monitor weight changes over time
+- **BMI & Macros**: Calculate health metrics
+
+## 🛡️ Security
+
+- **No API keys needed** - AI features powered by secure proxy server
+- **Safe to share** - Perfect for group projects and academic use
+- **Zero configuration** - Works immediately after cloning
 
 ---

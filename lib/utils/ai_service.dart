@@ -1,5 +1,4 @@
 import 'package:isar/isar.dart';
-import 'package:dart_openai/dart_openai.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../data/user_profile.dart';
@@ -20,11 +19,8 @@ class AIService {
 
   /// Initialize AI service (call this in main.dart)
   static void initializeAI() {
-    if (ApiConfig.useOpenAI) {
-      // Keep OpenAI initialization for fallback
-      OpenAI.apiKey = ApiConfig.openaiApiKey;
-      OpenAI.baseUrl = 'https://api.openai.com';
-    }
+    // No initialization needed - using proxy server
+    print('✅ AI service initialized - using proxy server');
   }
 
   /// Get AI response with hybrid approach
@@ -74,7 +70,7 @@ class AIService {
       bmiCategory = result.bmiCategory;
     }
 
-    // Build conversation history for OpenAI
+    // Build conversation history
     List<Map<String, String>> history = chatHistory ?? [];
 
     // Build context string
@@ -130,7 +126,7 @@ Example workout plan format (do not mention this to the user):
 ]
 ''';
 
-    // Build OpenAI messages array with history
+    // Build messages array with history
     final messages = <dynamic>[];
     messages.add({
       'role': 'system',
@@ -147,183 +143,39 @@ Example workout plan format (do not mention this to the user):
       'content': prompt,
     });
 
-    // Try Render proxy server first, fallback to direct OpenAI
-    if (ApiConfig.useOpenAI) {
-      try {
-        // Try Render proxy server
-        final proxyResponse = await http.post(
-          Uri.parse(ApiConfig.proxyServerUrl),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'question': question,
-            'chatHistory': history,
-            'userContext': {
-              'contextString': contextString,
-            },
-          }),
-        );
+    // Use Render proxy server for AI features
+    try {
+      final proxyResponse = await http.post(
+        Uri.parse(ApiConfig.proxyServerUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'question': question,
+          'chatHistory': history,
+          'userContext': {
+            'contextString': contextString,
+          },
+        }),
+      );
 
-        if (proxyResponse.statusCode == 200) {
-          final data = jsonDecode(proxyResponse.body);
-          return data['response'] as String;
-        } else {
-          print('Proxy server error: ${proxyResponse.statusCode}');
-          throw Exception('Proxy server failed');
-        }
-      } catch (e) {
-        print('Proxy server error: $e');
-        // Fallback to direct OpenAI
-        try {
-          final completion = await OpenAI.instance.chat.create(
-            model: ApiConfig.defaultModel,
-            messages: messages.map((m) =>
-              OpenAIChatCompletionChoiceMessageModel(
-                role: m['role'] == 'system' ? OpenAIChatMessageRole.system :
-                      m['role'] == 'assistant' ? OpenAIChatMessageRole.assistant :
-                      OpenAIChatMessageRole.user,
-                content: [OpenAIChatCompletionChoiceMessageContentItemModel.text(m['content'])],
-              )
-            ).toList(),
-            maxTokens: ApiConfig.maxTokens,
-            temperature: ApiConfig.temperature,
-          );
-          final contentList = completion.choices.first.message.content;
-          if (contentList != null && contentList.isNotEmpty && contentList.first.text != null) {
-            return contentList.first.text!;
-          } else {
-            return 'I apologize, but I couldn\'t generate a response right now. Please try again.';
-          }
-        } catch (openaiError) {
-          print('OpenAI API error: $openaiError');
-          // Fallback to hard-coded response
-          return await _getHardcodedResponse(question, context);
-        }
+      if (proxyResponse.statusCode == 200) {
+        final data = jsonDecode(proxyResponse.body);
+        return data['response'] as String;
+      } else {
+        print('Proxy server error: ${proxyResponse.statusCode}');
+        throw Exception('Proxy server failed');
       }
+    } catch (e) {
+      print('Proxy server error: $e');
+      // Fallback to hard-coded response
+      return await _getHardcodedResponse(question, context);
     }
     // Default to hard-coded response
     return await _getHardcodedResponse(question, context);
   }
 
-  /// Determine if we should use hard-coded responses
-  bool _shouldUseHardcodedResponse(String question) {
-    final lowerQuestion = question.toLowerCase();
-    
-    // Use hard-coded for structured requests
-    return lowerQuestion.contains('generate') ||
-           lowerQuestion.contains('create') ||
-           lowerQuestion.contains('plan') ||
-           lowerQuestion.contains('calculate') ||
-           lowerQuestion.contains('analyze') ||
-           lowerQuestion.contains('track') ||
-           lowerQuestion.contains('nutrition') ||
-           lowerQuestion.contains('calories') ||
-           lowerQuestion.contains('macros');
-  }
+  // Removed _shouldUseHardcodedResponse method - not needed
 
-  /// Get OpenAI response
-  Future<String> _getOpenAIResponse(String question, Map<String, dynamic> context) async {
-    final userProfile = context['userProfile'] as UserProfile?;
-    final weightEntries = context['weightEntries'] as List<WeightEntry>;
-    final completedWorkouts = context['completedWorkouts'] as List<CompletedWorkout>;
-    final exercises = context['exercises'] as List<Exercise>;
-
-    // --- NEW: Calculate muscle recovery ---
-    Map<data_enums.MuscleGroup, double> recoveryMap = {};
-    try {
-      recoveryMap = await RecoveryCalculator.calculateRecovery(completedWorkouts);
-    } catch (e) {
-      print('Error calculating recovery: $e');
-    }
-
-    // --- Format available exercises with muscle groups ---
-    String availableExercises = exercises.isNotEmpty
-        ? exercises.map((e) =>
-            "${e.name} (Muscle groups: ${e.muscleGroups.join(', ')})").join('; ')
-        : 'None';
-
-    // --- Summarize recent workouts ---
-    String recentWorkouts = completedWorkouts.isNotEmpty
-        ? completedWorkouts.take(5).map((w) {
-            final date = w.timestamp.toLocal().toString().split(' ')[0];
-            final allExercises = context['exercises'] as List<Exercise>;
-            final muscles = w.exercises
-              .map((ex) {
-                final found = allExercises.where((e) => e.name == ex.name);
-                return found.isNotEmpty ? found.first.muscleGroups : <String>[];
-              })
-              .expand((groups) => groups)
-              .toSet()
-              .join(', ');
-            return "$date: ${w.exercises.map((ex) => ex.name).join(', ')} (Muscles: $muscles)";
-          }).join(' | ')
-        : 'No recent workouts.';
-
-    // --- Format muscle recovery status ---
-    String muscleRecovery = recoveryMap.isNotEmpty
-        ? recoveryMap.entries.map((e) =>
-            "${e.key.name}: ${(e.value * 100).toStringAsFixed(0)}% recovered").join('; ')
-        : 'No recovery data.';
-
-    // --- Build context string ---
-    String contextString = "You are an AI fitness coach for a mobile app called Fait. ";
-    if (userProfile != null) {
-      contextString += "User Profile: ";
-      contextString += "${userProfile.name ?? 'Unknown'}, Age: ${userProfile.age}, Gender: ${userProfile.gender}, Activity Level: ${userProfile.activityLevel}, Weight Goal: ${userProfile.weightGoal}. ";
-    }
-    if (weightEntries.isNotEmpty) {
-      final latestWeight = weightEntries.last.weight;
-      contextString += "Current weight: ${latestWeight}lbs. ";
-    }
-    contextString += "Available exercises: $availableExercises. ";
-    contextString += "Recent workouts: $recentWorkouts. ";
-    contextString += "Muscle recovery status: $muscleRecovery. ";
-
-    // --- Build prompt with clear instructions for JSON output ---
-    final prompt = '''
-$contextString
-
-User Question: $question
-
-When generating a workout plan, only use exercises from the provided list, and avoid assigning exercises to muscle groups that are less than 80% recovered. For each exercise, suggest a realistic number of reps (6-15) and sets (2-5). For weight, use the user's previous best for that exercise if available, or a reasonable default (e.g., 10 lbs for dumbbells, 45 lbs for barbells). Return the weight as a number in pounds for each exercise. Respond ONLY with a JSON array of workout objects, each with: "name", "sets", "reps", "weight", and "notes". Example:
-[
-  {"name": "Barbell Bench Press", "sets": 3, "reps": 8, "weight": 95, "notes": ""},
-  {"name": "Dumbbell Row", "sets": 3, "reps": 10, "weight": 30, "notes": ""}
-]
-''';
-
-    try {
-      final completion = await OpenAI.instance.chat.create(
-        model: ApiConfig.defaultModel,
-        messages: [
-          OpenAIChatCompletionChoiceMessageModel(
-            role: OpenAIChatMessageRole.system,
-            content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                'You are a knowledgeable and encouraging AI fitness coach. Provide helpful, personalized advice based on the user\'s data and questions.',
-              ),
-            ],
-          ),
-          OpenAIChatCompletionChoiceMessageModel(
-            role: OpenAIChatMessageRole.user,
-            content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(prompt),
-            ],
-          ),
-        ],
-        maxTokens: ApiConfig.maxTokens,
-        temperature: ApiConfig.temperature,
-      );
-
-      final contentList = completion.choices.first.message.content;
-      if (contentList != null && contentList.isNotEmpty && contentList.first.text != null) {
-        return contentList.first.text!;
-      } else {
-        return 'I apologize, but I couldn\'t generate a response right now. Please try again.';
-      }
-    } catch (e) {
-      throw Exception('OpenAI API error: $e');
-    }
-  }
+  // Removed _getOpenAIResponse method - using proxy server instead
 
   /// Get hard-coded response (existing logic)
   Future<String> _getHardcodedResponse(String question, Map<String, dynamic> context) async {

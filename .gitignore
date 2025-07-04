@@ -148,8 +148,7 @@ out/
 # End of https://www.toptal.com/developers/gitignore/api/flutter,dart,macos,windows,android,intellij,visualstudiocode
 
 # ----
-# Environment Variables & API Keys
-.env
+# Environment Variables & API Keys (removed - using proxy server)
 
 # ----
 # Isar & build_runner
