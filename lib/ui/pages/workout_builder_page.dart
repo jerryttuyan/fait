@@ -834,25 +834,12 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
             icon: const Icon(Icons.more_vert),
             onSelected: (value) async {
               switch (value) {
-                case 'add_exercise':
-                  await _showAddExerciseModal();
-                  break;
                 case 'edit_exercises':
                   await _showEditExercisesModal();
                   break;
               }
             },
             itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'add_exercise',
-                child: Row(
-                  children: [
-                    Icon(Icons.add, color: Theme.of(context).colorScheme.primary),
-                    SizedBox(width: 8),
-                    Text('Add Exercise'),
-                  ],
-                ),
-              ),
               PopupMenuItem(
                 value: 'edit_exercises',
                 child: Row(
@@ -896,9 +883,20 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                 children: [
                   Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
                   const SizedBox(width: 8),
-                  Text(
-                    'Exercises',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                  Expanded(
+                    child: Text(
+                      'Exercises',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: _showAddExerciseModal,
+                    tooltip: 'Add Exercise',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
                   ),
                 ],
               ),
@@ -938,7 +936,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                         width: double.infinity,
                         margin: const EdgeInsets.symmetric(vertical: 6),
                         child: Material(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(16),
                           elevation: 2,
                           child: InkWell(
@@ -1017,7 +1015,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                     return Text(
                                       'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs' + (isLogged ? '  ✔' : ''),
                                       style: theme.textTheme.bodySmall?.copyWith(
-                                        color: isLogged ? Colors.green[700] : theme.colorScheme.onSurface.withOpacity(0.7),
+                                        color: isLogged ? theme.colorScheme.primary : theme.colorScheme.onSurface.withOpacity(0.7),
                                         fontWeight: isLogged ? FontWeight.bold : FontWeight.normal,
                                       ),
                                     );
@@ -1039,6 +1037,7 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                 label: const Text('Finish Workout'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: _finishWorkout,
@@ -1052,48 +1051,45 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
   }
 
   Future<void> _showAddExerciseModal() async {
-    final exercises = await isar.exercises.where().findAll();
-    final selectedExercise = await showDialog<Exercise>(
+    final result = await showModalBottomSheet<_ExercisePickerResult>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Exercise'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: ListView.builder(
-            itemCount: exercises.length,
-            itemBuilder: (context, index) {
-              final exercise = exercises[index];
-              return ListTile(
-                title: Text(exercise.name),
-                subtitle: Text(exercise.muscleGroups.join(', ')),
-                onTap: () => Navigator.of(context).pop(exercise),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      builder: (context) => const _ExercisePickerModal(),
     );
-
-    if (selectedExercise != null) {
+    
+    if (result != null) {
+      // Get weight suggestion for this exercise
+      final suggestion = await ExerciseSuggestionService.getWeightSuggestion(
+        isarInstance,
+        result.exercise.name,
+        10, // Default target reps
+      );
+      
       setState(() {
         final newExercise = WorkoutExerciseDraft(
-          selectedExercise.name,
-          [
-            WorkoutSetDraft(reps: 10, weight: 0),
-            WorkoutSetDraft(reps: 10, weight: 0),
-            WorkoutSetDraft(reps: 10, weight: 0),
-          ],
+          result.exercise.name,
+          List.generate(
+            suggestion.suggestedSets > 0 ? suggestion.suggestedSets : 3,
+            (index) => WorkoutSetDraft(
+              reps: 10,
+              weight: suggestion.suggestedWeight > 0 ? suggestion.suggestedWeight : 0,
+            ),
+          ),
         );
         widget.exercises.add(newExercise);
         _completedSets[widget.exercises.length - 1] = [];
       });
+      
+      // Show suggestion info if available
+      if (suggestion.confidence > 0.0 && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added: ${result.exercise.name} with smart weight suggestions'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -1237,6 +1233,32 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
     });
   }
 
+  void _addSet() {
+    setState(() {
+      if (sets.isNotEmpty) {
+        final last = sets.last;
+        sets.add(WorkoutSetDraft(reps: last.reps, weight: last.weight));
+        completed.add(false);
+      } else {
+        sets.add(WorkoutSetDraft(reps: 10, weight: 0));
+        completed.add(false);
+      }
+    });
+  }
+
+  void _removeLastSet() {
+    if (sets.length > 1) {
+      setState(() {
+        sets.removeLast();
+        completed.removeLast();
+        // Adjust current set if needed
+        if (currentSet >= sets.length) {
+          currentSet = sets.length - 1;
+        }
+      });
+    }
+  }
+
   void _logCurrentSet() async {
     if (completed[currentSet]) return;
     setState(() {
@@ -1273,79 +1295,118 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
             onPressed: _onBack,
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Sets', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: sets.length,
-                  itemBuilder: (context, index) {
-                    final set = sets[index];
-                    final isCurrent = index == currentSet;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() => currentSet = index);
-                      },
-                      child: Card(
-                        color: completed[index]
-                            ? Colors.green[100]
-                            : isCurrent
-                                ? Colors.deepPurple[100]
-                                : null,
-                        child: ListTile(
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  initialValue: set.reps.toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Reps'),
-                                  onChanged: (val) {
-                                    final reps = int.tryParse(val) ?? 0;
-                                    _updateReps(index, reps);
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  initialValue: set.weight.toInt().toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Weight (lbs)'),
-                                  onChanged: (val) {
-                                    final weight = int.tryParse(val) ?? 0;
-                                    _updateWeight(index, weight.toDouble());
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: completed[index]
-                              ? const Icon(Icons.check, color: Colors.green)
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Sets', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: sets.length,
+                    itemBuilder: (context, index) {
+                      final set = sets[index];
+                      final isCurrent = index == currentSet;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => currentSet = index);
+                        },
+                        child: Card(
+                          color: completed[index]
+                              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
                               : isCurrent
-                                  ? const Icon(Icons.arrow_right, color: Colors.deepPurple)
+                                  ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3)
                                   : null,
+                          child: ListTile(
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: set.reps.toString(),
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(labelText: 'Reps'),
+                                    onChanged: (val) {
+                                      final reps = int.tryParse(val) ?? 0;
+                                      _updateReps(index, reps);
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: set.weight.toInt().toString(),
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(labelText: 'Weight (lbs)'),
+                                    onChanged: (val) {
+                                      final weight = int.tryParse(val) ?? 0;
+                                      _updateWeight(index, weight.toDouble());
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                                                      trailing: completed[index]
+                              ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                              : isCurrent
+                                  ? Icon(Icons.arrow_right, color: Theme.of(context).colorScheme.secondary)
+                                  : null,
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
+                const SizedBox(height: 16),
+                // Quick Set Management Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.remove),
+                        label: const Text('Remove Set'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                          foregroundColor: Theme.of(context).colorScheme.onError,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        onPressed: sets.length > 1 ? _removeLastSet : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Set'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.secondary,
+                          foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                          minimumSize: const Size.fromHeight(48),
+                        ),
+                        onPressed: _addSet,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                              ElevatedButton.icon(
                 icon: const Icon(Icons.check),
                 label: const Text('Log Set'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: completed[currentSet] ? Colors.grey : Theme.of(context).colorScheme.primary,
+                  backgroundColor: completed[currentSet] 
+                      ? Theme.of(context).colorScheme.surfaceVariant
+                      : Theme.of(context).colorScheme.primary,
+                  foregroundColor: completed[currentSet] 
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : Theme.of(context).colorScheme.onPrimary,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: completed[currentSet] ? null : _logCurrentSet,
               ),
-            ],
+                const SizedBox(height: 16), // Extra bottom padding for safety
+              ],
+            ),
           ),
         ),
       ),
