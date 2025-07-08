@@ -66,9 +66,9 @@ class _ProfilePageState extends State<ProfilePage> {
         await isar.userProfiles.put(_profile);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile Saved!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile Saved!')));
       FocusScope.of(context).unfocus();
     }
   }
@@ -117,10 +117,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   decoration: InputDecoration(
                     labelText: 'Name',
                     prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
-                  validator: (value) => (value == null || value.isEmpty) ? 'Please enter your name' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Please enter your name'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -131,13 +138,23 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: InputDecoration(
                           labelText: 'Gender',
                           prefixIcon: const Icon(Icons.wc),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         isExpanded: true,
-                        items: Gender.values.map((g) => DropdownMenuItem(
-                          value: g,
-                          child: Text(g.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
-                        )).toList(),
+                        items: Gender.values
+                            .map(
+                              (g) => DropdownMenuItem(
+                                value: g,
+                                child: Text(
+                                  g.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (g) => setState(() => _profile.gender = g!),
                       ),
                     ),
@@ -148,14 +165,25 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: InputDecoration(
                           labelText: 'Activity',
                           prefixIcon: const Icon(Icons.directions_run),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         isExpanded: true,
-                        items: ActivityLevel.values.map((a) => DropdownMenuItem(
-                          value: a,
-                          child: Text(a.name, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14)),
-                        )).toList(),
-                        onChanged: (a) => setState(() => _profile.activityLevel = a!),
+                        items: ActivityLevel.values
+                            .map(
+                              (a) => DropdownMenuItem(
+                                value: a,
+                                child: Text(
+                                  a.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (a) =>
+                            setState(() => _profile.activityLevel = a!),
                       ),
                     ),
                   ],
@@ -166,9 +194,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   decoration: InputDecoration(
                     labelText: 'Weight Goal',
                     prefixIcon: const Icon(Icons.flag_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  items: WeightGoal.values.map((g) => DropdownMenuItem(value: g, child: Text(g.name))).toList(),
+                  items: WeightGoal.values
+                      .map(
+                        (g) => DropdownMenuItem(
+                          value: g,
+                          child: Text(g.displayName),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (g) => setState(() => _profile.weightGoal = g!),
                 ),
                 const SizedBox(height: 16),
@@ -180,7 +217,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         decoration: InputDecoration(
                           labelText: 'Height (ft)',
                           prefixIcon: const Icon(Icons.height),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         keyboardType: TextInputType.number,
                       ),
@@ -191,7 +230,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         controller: _heightInCtrl,
                         decoration: InputDecoration(
                           labelText: '(in)',
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         keyboardType: TextInputType.number,
                       ),
@@ -203,7 +244,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     Expanded(
                       child: Text(
-                        _birthday == null ? 'No birthday selected' : 'Birthday: ${DateFormat.yMMMd().format(_birthday!)}',
+                        _birthday == null
+                            ? 'No birthday selected'
+                            : 'Birthday: ${DateFormat.yMMMd().format(_birthday!)}',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
@@ -220,7 +263,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   decoration: InputDecoration(
                     labelText: 'App Theme',
                     prefixIcon: const Icon(Icons.brightness_6),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   items: const [
                     DropdownMenuItem(
@@ -249,8 +294,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   label: const Text('Save Profile'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
                 if (kDebugMode)
@@ -262,10 +312,18 @@ class _ProfilePageState extends State<ProfilePage> {
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text("Reset App Data"),
-                            content: const Text("This will erase your saved profile. Are you sure?"),
+                            content: const Text(
+                              "This will erase your saved profile. Are you sure?",
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Reset")),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: const Text("Reset"),
+                              ),
                             ],
                           ),
                         );
@@ -287,7 +345,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           );
                         }
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
                       child: const Text("Reset App (Dev Only)"),
                     ),
                   ),

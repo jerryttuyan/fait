@@ -18,15 +18,15 @@ class _MainScreenState extends State<MainScreen> {
 
   static const List<Widget> _pages = <Widget>[
     WorkoutsPage(), // Workout first
-    BodyPage(), // Unified Body page
-    AICoachPage(), // AI Coach page
+    AICoachPage(), // AI Coach now second
+    BodyPage(), // Unified Body page now third
     ProfilePage(),
   ];
 
   static const List<String> _pageTitles = <String>[
     'Workout',
-    'Body', // Unified Body page
-    'AI Coach',
+    'AI Coach', // AI Coach now second
+    'Body', // Unified Body page now third
     'My Profile',
   ];
 
@@ -54,14 +54,14 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Workout',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.insights_outlined),
-            activeIcon: Icon(Icons.insights),
-            label: 'Body',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.smart_toy_outlined),
             activeIcon: Icon(Icons.smart_toy),
             label: 'AI Coach',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights_outlined),
+            activeIcon: Icon(Icons.insights),
+            label: 'Body',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

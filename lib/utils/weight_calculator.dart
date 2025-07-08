@@ -1,6 +1,14 @@
 // Enumerating groups of variables.
-enum WeightGoal { weightLoss, weightGain, maintenance }
-enum ActivityLevel { sedentary, lightlyActive, moderatelyActive, veryActive, extraActive }
+enum WeightGoal { weightLoss, weightGain, maintainence }
+
+enum ActivityLevel {
+  sedentary,
+  lightlyActive,
+  moderatelyActive,
+  veryActive,
+  extraActive,
+}
+
 enum Gender { male, female }
 
 //Calculate BMI and RMR
@@ -9,7 +17,12 @@ class WeightManagementCalculator {
     return weightKg / (heightM * heightM);
   }
 
-  static double calculateRMR(double weightKg, double heightCm, int age, Gender gender) {
+  static double calculateRMR(
+    double weightKg,
+    double heightCm,
+    int age,
+    Gender gender,
+  ) {
     if (gender == Gender.male) {
       return (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5;
     } else {
@@ -36,12 +49,17 @@ class WeightManagementCalculator {
         return tdee - 500;
       case WeightGoal.weightGain:
         return tdee + 500;
-      case WeightGoal.maintenance:
+      case WeightGoal.maintainence:
         return tdee;
     }
   }
-// get macros (fat, protein, carbs)
-  static MacronutrientNeeds calculateMacros(double targetCalories, double weightKg, WeightGoal goal) {
+
+  // get macros (fat, protein, carbs)
+  static MacronutrientNeeds calculateMacros(
+    double targetCalories,
+    double weightKg,
+    WeightGoal goal,
+  ) {
     double proteinGrams;
     switch (goal) {
       case WeightGoal.weightLoss:
@@ -50,13 +68,14 @@ class WeightManagementCalculator {
       case WeightGoal.weightGain:
         proteinGrams = weightKg * 2.0;
         break;
-      case WeightGoal.maintenance:
+      case WeightGoal.maintainence:
         proteinGrams = weightKg * 1.8;
         break;
     }
 
     double fatGrams = (targetCalories * 0.275) / 9;
-    double remainingCalories = targetCalories - (proteinGrams * 4) - (fatGrams * 9);
+    double remainingCalories =
+        targetCalories - (proteinGrams * 4) - (fatGrams * 9);
     double carbGrams = remainingCalories / 4;
 
     return MacronutrientNeeds(
@@ -67,6 +86,7 @@ class WeightManagementCalculator {
     );
   }
 }
+
 // Data model that holds requierements calculated
 class MacronutrientNeeds {
   final double protein;
@@ -81,6 +101,7 @@ class MacronutrientNeeds {
     required this.calories,
   });
 }
+
 // Container for all calculated health data
 class WeightManagementResult {
   final double bmi;
@@ -106,6 +127,7 @@ class WeightManagementResult {
     return "Obese";
   }
 }
+
 // Take input
 WeightManagementResult getWeightManagementPlan({
   required double weightKg,
@@ -120,13 +142,25 @@ WeightManagementResult getWeightManagementPlan({
   double bmi = WeightManagementCalculator.calculateBMI(weightKg, heightM);
   String bmiCategory = WeightManagementResult.getBMICategory(bmi);
 
-  double rmr = WeightManagementCalculator.calculateRMR(weightKg, heightCm, age, gender);
+  double rmr = WeightManagementCalculator.calculateRMR(
+    weightKg,
+    heightCm,
+    age,
+    gender,
+  );
   double tdee = WeightManagementCalculator.calculateTDEE(rmr, activityLevel);
-  double targetCalories = WeightManagementCalculator.calculateTargetCalories(tdee, goal);
+  double targetCalories = WeightManagementCalculator.calculateTargetCalories(
+    tdee,
+    goal,
+  );
 
-  MacronutrientNeeds macros = WeightManagementCalculator.calculateMacros(targetCalories, weightKg, goal);
+  MacronutrientNeeds macros = WeightManagementCalculator.calculateMacros(
+    targetCalories,
+    weightKg,
+    goal,
+  );
 
-// Return results
+  // Return results
   return WeightManagementResult(
     bmi: bmi,
     bmiCategory: bmiCategory,

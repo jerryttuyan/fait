@@ -69,27 +69,24 @@ class ThemeProvider extends ChangeNotifier {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // No environment variables needed - using proxy server
   print('✅ Using proxy server for AI features');
-  
+
   // Initialize AI service
   AIService.initializeAI();
-  
+
   final dir = await getApplicationDocumentsDirectory();
-  isar = await Isar.open(
-    [
-      WeightEntrySchema,
-      UserProfileSchema,
-      ExerciseSchema,
-      WorkoutSchema,
-      WorkoutExerciseSchema,
-      WorkoutTemplateSchema,
-      // WorkoutSet is embedded, no schema needed
-      CompletedWorkoutSchema,
-    ],
-    directory: dir.path,
-  );
+  isar = await Isar.open([
+    WeightEntrySchema,
+    UserProfileSchema,
+    ExerciseSchema,
+    WorkoutSchema,
+    WorkoutExerciseSchema,
+    WorkoutTemplateSchema,
+    // WorkoutSet is embedded, no schema needed
+    CompletedWorkoutSchema,
+  ], directory: dir.path);
 
   // Load or update exercises
   await _loadExercises();
@@ -105,15 +102,19 @@ void main() async {
 Future<void> _loadExercises() async {
   // Check if exercises already exist in the database
   final existingExercises = await isar.exercises.where().findAll();
-  
+
   // If no exercises exist, populate with default exercises
   if (existingExercises.isEmpty) {
     await isar.writeTxn(() async {
       await isar.exercises.putAll(defaultExercises);
     });
-    print('Initialized exercise catalog with ${defaultExercises.length} exercises');
+    print(
+      'Initialized exercise catalog with ${defaultExercises.length} exercises',
+    );
   } else {
-    print('Exercise catalog already contains ${existingExercises.length} exercises');
+    print(
+      'Exercise catalog already contains ${existingExercises.length} exercises',
+    );
   }
 }
 
@@ -169,14 +170,14 @@ class _AppStartupPageState extends State<AppStartupPage> {
         });
         print('Cleared existing profile data for testing');
       }
-      
+
       setState(() {
         _hasProfile = false;
         _isLoading = false;
       });
       return;
     }
-    
+
     // Normal behavior: check if profile exists
     final profile = await isar.userProfiles.get(1);
     setState(() {
@@ -188,13 +189,14 @@ class _AppStartupPageState extends State<AppStartupPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return _hasProfile ? const MainScreen() : const FitnessAppLandingPage();
+    // Wrap with GestureDetector to dismiss keyboard on tap outside
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: _hasProfile ? const MainScreen() : const FitnessAppLandingPage(),
+    );
   }
 }

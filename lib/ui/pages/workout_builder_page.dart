@@ -30,7 +30,9 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
   @override
   void initState() {
     super.initState();
-    _exercises = widget.initialExercises != null ? List<WorkoutExerciseDraft>.from(widget.initialExercises!) : [];
+    _exercises = widget.initialExercises != null
+        ? List<WorkoutExerciseDraft>.from(widget.initialExercises!)
+        : [];
     _determineOptimalSplit();
   }
 
@@ -41,39 +43,43 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
         .limit(10)
         .findAll();
     final recovery = await RecoveryCalculator.calculateRecovery(recentWorkouts);
-    
+
     // Calculate recovery scores for each split type
     final splitScores = <SplitType, double>{};
-    
+
     // Push day recovery (chest, shoulders, triceps)
-    final pushRecovery = (recovery[MuscleGroup.chest] ?? 1.0) * 0.4 +
-                        (recovery[MuscleGroup.shoulders] ?? 1.0) * 0.4 +
-                        (recovery[MuscleGroup.triceps] ?? 1.0) * 0.2;
+    final pushRecovery =
+        (recovery[MuscleGroup.chest] ?? 1.0) * 0.4 +
+        (recovery[MuscleGroup.shoulders] ?? 1.0) * 0.4 +
+        (recovery[MuscleGroup.triceps] ?? 1.0) * 0.2;
     splitScores[SplitType.push] = pushRecovery;
-    
+
     // Pull day recovery (back, biceps)
-    final pullRecovery = (recovery[MuscleGroup.back] ?? 1.0) * 0.7 +
-                        (recovery[MuscleGroup.biceps] ?? 1.0) * 0.3;
+    final pullRecovery =
+        (recovery[MuscleGroup.back] ?? 1.0) * 0.7 +
+        (recovery[MuscleGroup.biceps] ?? 1.0) * 0.3;
     splitScores[SplitType.pull] = pullRecovery;
-    
+
     // Legs day recovery (quads, hamstrings, glutes, lower back)
-    final legsRecovery = (recovery[MuscleGroup.quadriceps] ?? 1.0) * 0.3 +
-                        (recovery[MuscleGroup.hamstrings] ?? 1.0) * 0.3 +
-                        (recovery[MuscleGroup.glutes] ?? 1.0) * 0.2 +
-                        (recovery[MuscleGroup.lowerBack] ?? 1.0) * 0.2;
+    final legsRecovery =
+        (recovery[MuscleGroup.quadriceps] ?? 1.0) * 0.3 +
+        (recovery[MuscleGroup.hamstrings] ?? 1.0) * 0.3 +
+        (recovery[MuscleGroup.glutes] ?? 1.0) * 0.2 +
+        (recovery[MuscleGroup.lowerBack] ?? 1.0) * 0.2;
     splitScores[SplitType.legs] = legsRecovery;
-    
+
     // Upper body recovery (push + pull muscles)
     final upperRecovery = (pushRecovery + pullRecovery) / 2;
     splitScores[SplitType.upper] = upperRecovery;
-    
+
     // Lower body recovery (same as legs)
     splitScores[SplitType.lower] = legsRecovery;
-    
+
     // Full body recovery (average of all major muscle groups)
-    final fullBodyRecovery = recovery.values.reduce((a, b) => a + b) / recovery.length;
+    final fullBodyRecovery =
+        recovery.values.reduce((a, b) => a + b) / recovery.length;
     splitScores[SplitType.fullBody] = fullBodyRecovery;
-    
+
     // Set the optimal split type
     if (mounted) {
       setState(() {
@@ -97,24 +103,27 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
         result.exercise.name,
         10, // Default target reps
       );
-      
+
       setState(() {
-        _exercises.add(WorkoutExerciseDraft(result.exercise.name, 
-          List.generate(
-            suggestion.suggestedSets,
-            (index) => WorkoutSetDraft(
-              reps: 10, 
-              weight: suggestion.suggestedWeight,
+        _exercises.add(
+          WorkoutExerciseDraft(
+            result.exercise.name,
+            List.generate(
+              suggestion.suggestedSets,
+              (index) =>
+                  WorkoutSetDraft(reps: 10, weight: suggestion.suggestedWeight),
             ),
           ),
-        ));
+        );
       });
-      
+
       // Show suggestion info if available
       if (suggestion.confidence > 0.0 && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Suggested: ${suggestion.suggestedWeight.toInt()} lbs × ${suggestion.suggestedSets} sets (${suggestion.reason})'),
+            content: Text(
+              'Suggested: ${suggestion.suggestedWeight.toInt()} lbs × ${suggestion.suggestedSets} sets (${suggestion.reason})',
+            ),
             duration: const Duration(seconds: 3),
             backgroundColor: Colors.blue,
           ),
@@ -125,12 +134,14 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
 
   void _loadPreset() async {
     final templates = await isar.workoutTemplates.where().findAll();
-    
+
     if (templates.isEmpty) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No workout presets found. Complete a workout and save it as a preset first.'),
+            content: Text(
+              'No workout presets found. Complete a workout and save it as a preset first.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -170,7 +181,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
       setState(() {
         _exercises.clear();
       });
-      
+
       // Load exercises with smart weight suggestions
       for (final exercise in selectedTemplate.exercises) {
         final suggestion = await ExerciseSuggestionService.getWeightSuggestion(
@@ -178,18 +189,22 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
           exercise.name,
           exercise.reps,
         );
-        
+
         // Use suggested sets if available, otherwise use template sets
-        final numberOfSets = suggestion.suggestedSets > 0 ? suggestion.suggestedSets : exercise.sets;
-        
+        final numberOfSets = suggestion.suggestedSets > 0
+            ? suggestion.suggestedSets
+            : exercise.sets;
+
         final sets = List.generate(
           numberOfSets,
           (index) => WorkoutSetDraft(
             reps: exercise.reps,
-            weight: suggestion.suggestedWeight > 0 ? suggestion.suggestedWeight : exercise.weight,
+            weight: suggestion.suggestedWeight > 0
+                ? suggestion.suggestedWeight
+                : exercise.weight,
           ),
         );
-        
+
         setState(() {
           _exercises.add(WorkoutExerciseDraft(exercise.name, sets));
         });
@@ -198,7 +213,9 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Loaded preset: ${selectedTemplate.name} with smart weight suggestions'),
+            content: Text(
+              'Loaded preset: ${selectedTemplate.name} with smart weight suggestions',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -207,11 +224,18 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
   }
 
   Future<double?> _getCurrentWeight() async {
-    final lastWeightEntry = await isar.weightEntrys.where().sortByDateDesc().findFirst();
+    final lastWeightEntry = await isar.weightEntrys
+        .where()
+        .sortByDateDesc()
+        .findFirst();
     return lastWeightEntry?.weight;
   }
 
-  Future<void> _showEditSetsModal(BuildContext context, WorkoutExerciseDraft exercise, void Function(void Function()) setStateParent) async {
+  Future<void> _showEditSetsModal(
+    BuildContext context,
+    WorkoutExerciseDraft exercise,
+    void Function(void Function()) setStateParent,
+  ) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -228,9 +252,15 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => WorkoutInProgressPage(
-          exercises: _exercises.map((e) => WorkoutExerciseDraft(e.exerciseName, [
-            ...e.sets.map((s) => WorkoutSetDraft(reps: s.reps, weight: s.weight)),
-          ])).toList(),
+          exercises: _exercises
+              .map(
+                (e) => WorkoutExerciseDraft(e.exerciseName, [
+                  ...e.sets.map(
+                    (s) => WorkoutSetDraft(reps: s.reps, weight: s.weight),
+                  ),
+                ]),
+              )
+              .toList(),
         ),
       ),
     );
@@ -249,7 +279,7 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
             // Date label at the very top
             Text(dateLabel, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            
+
             // Preset/Generate buttons
             Row(
               children: [
@@ -265,87 +295,133 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _isGenerating ? null : () async {
-                            setState(() {
-                              _isGenerating = true;
-                            });
-                            
-                            try {
-                              // Get user profile for better workout generation
-                              final userProfile = await isar.userProfiles.get(1);
-                              final currentWeight = await _getCurrentWeight();
-                              
-                              // Generate recommended workout (optimal split based on recovery)
-                              final generatedWorkout = await WorkoutGenerator.generateWorkout(
-                                preferredSplit: null, // Let the generator choose optimal split
-                                targetExercises: 6,
-                                prioritizeRecovery: true,
-                              );
+                          onPressed: _isGenerating
+                              ? null
+                              : () async {
+                                  setState(() {
+                                    _isGenerating = true;
+                                  });
 
-                              setState(() {
-                                _exercises.clear();
-                                // Convert generated exercises to draft format
-                                for (final generatedExercise in generatedWorkout.exercises) {
-                                  final sets = generatedExercise.sets.map((set) => WorkoutSetDraft(
-                                    reps: set.reps,
-                                    weight: set.weight,
-                                  )).toList();
-                                  
-                                  _exercises.add(WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
-                                }
-                              });
+                                  try {
+                                    // Get user profile for better workout generation
+                                    final userProfile = await isar.userProfiles
+                                        .get(1);
+                                    final currentWeight =
+                                        await _getCurrentWeight();
 
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Generated recommended ${generatedWorkout.splitType.name} workout: ${generatedWorkout.reasoning}'),
-                                    backgroundColor: Colors.green,
-                                    duration: const Duration(seconds: 4),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error generating workout: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            } finally {
-                              setState(() {
-                                _isGenerating = false;
-                              });
-                            }
-                          },
+                                    // Generate recommended workout (optimal split based on recovery)
+                                    final generatedWorkout =
+                                        await WorkoutGenerator.generateWorkout(
+                                          preferredSplit:
+                                              null, // Let the generator choose optimal split
+                                          targetExercises: 6,
+                                          prioritizeRecovery: true,
+                                        );
+
+                                    setState(() {
+                                      _exercises.clear();
+                                      // Convert generated exercises to draft format
+                                      for (final generatedExercise
+                                          in generatedWorkout.exercises) {
+                                        final sets = generatedExercise.sets
+                                            .map(
+                                              (set) => WorkoutSetDraft(
+                                                reps: set.reps,
+                                                weight: set.weight,
+                                              ),
+                                            )
+                                            .toList();
+
+                                        _exercises.add(
+                                          WorkoutExerciseDraft(
+                                            generatedExercise.exercise.name,
+                                            sets,
+                                          ),
+                                        );
+                                      }
+                                    });
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Generated recommended ${generatedWorkout.splitType.name} workout: ${generatedWorkout.reasoning}',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                          duration: const Duration(seconds: 4),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Error generating workout: $e',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  } finally {
+                                    setState(() {
+                                      _isGenerating = false;
+                                    });
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
                             minimumSize: const Size(0, 48),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                           ),
-                          child: _isGenerating 
-                            ? const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: null),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text('Generating...'),
-                                ],
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.onPrimary),
-                                  const SizedBox(width: 8),
-                                  Text('Generate', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
-                                ],
-                              ),
+                          child: _isGenerating
+                              ? const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: null,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Generating...'),
+                                  ],
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.auto_awesome,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Generate',
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                       SizedBox(
@@ -356,35 +432,50 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                             setState(() {
                               _isGenerating = true;
                             });
-                            
+
                             try {
                               // Get user profile for better workout generation
-                              final userProfile = await isar.userProfiles.get(1);
-                              final currentWeight = await _getCurrentWeight();
-                              
-                              final generatedWorkout = await WorkoutGenerator.generateWorkout(
-                                preferredSplit: splitType,
-                                targetExercises: 6,
-                                prioritizeRecovery: true,
+                              final userProfile = await isar.userProfiles.get(
+                                1,
                               );
+                              final currentWeight = await _getCurrentWeight();
+
+                              final generatedWorkout =
+                                  await WorkoutGenerator.generateWorkout(
+                                    preferredSplit: splitType,
+                                    targetExercises: 6,
+                                    prioritizeRecovery: true,
+                                  );
 
                               setState(() {
                                 _exercises.clear();
                                 // Convert generated exercises to draft format
-                                for (final generatedExercise in generatedWorkout.exercises) {
-                                  final sets = generatedExercise.sets.map((set) => WorkoutSetDraft(
-                                    reps: set.reps,
-                                    weight: set.weight,
-                                  )).toList();
-                                  
-                                  _exercises.add(WorkoutExerciseDraft(generatedExercise.exercise.name, sets));
+                                for (final generatedExercise
+                                    in generatedWorkout.exercises) {
+                                  final sets = generatedExercise.sets
+                                      .map(
+                                        (set) => WorkoutSetDraft(
+                                          reps: set.reps,
+                                          weight: set.weight,
+                                        ),
+                                      )
+                                      .toList();
+
+                                  _exercises.add(
+                                    WorkoutExerciseDraft(
+                                      generatedExercise.exercise.name,
+                                      sets,
+                                    ),
+                                  );
                                 }
                               });
 
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Generated ${splitType.name} workout: ${generatedWorkout.reasoning}'),
+                                    content: Text(
+                                      'Generated ${splitType.name} workout: ${generatedWorkout.reasoning}',
+                                    ),
                                     backgroundColor: Colors.green,
                                     duration: const Duration(seconds: 4),
                                   ),
@@ -394,7 +485,9 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Error generating workout: $e'),
+                                    content: Text(
+                                      'Error generating workout: $e',
+                                    ),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -412,7 +505,12 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                               color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                               border: Border(
-                                left: BorderSide(color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.3), width: 1),
+                                left: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary.withOpacity(0.3),
+                                  width: 1,
+                                ),
                               ),
                             ),
                             child: Icon(
@@ -422,20 +520,26 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                             ),
                           ),
                           itemBuilder: (context) => [
-                            ...SplitType.values.map((split) => PopupMenuItem(
-                              value: split,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    _getSplitTypeIcon(split),
-                                    color: Theme.of(context).colorScheme.primary,
-                                    size: 20,
+                            ...SplitType.values
+                                .map(
+                                  (split) => PopupMenuItem(
+                                    value: split,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          _getSplitTypeIcon(split),
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(_getShortSplitTypeLabel(split)),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Text(_getShortSplitTypeLabel(split)),
-                                ],
-                              ),
-                            )).toList(),
+                                )
+                                .toList(),
                           ],
                         ),
                       ),
@@ -462,10 +566,20 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
                               children: ex.sets
                                   .asMap()
                                   .entries
-                                  .map((entry) => Text(
-                                        'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs',
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
-                                      ))
+                                  .map(
+                                    (entry) => Text(
+                                      'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withOpacity(0.7),
+                                          ),
+                                    ),
+                                  )
                                   .toList(),
                             ),
                             trailing: IconButton(
@@ -503,7 +617,9 @@ class _WorkoutBuilderPageState extends State<WorkoutBuilderPage> {
               icon: const Icon(Icons.play_arrow),
               label: const Text('Start Workout'),
               onPressed: _exercises.isEmpty ? null : _startWorkout,
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
             ),
           ],
         ),
@@ -670,9 +786,9 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
               const Center(child: Text('No exercises found.'))
             else
               Flexible(
-                child: _byMuscle 
-                  ? _buildGroupedExerciseList(filtered)
-                  : _buildSimpleExerciseList(filtered),
+                child: _byMuscle
+                    ? _buildGroupedExerciseList(filtered)
+                    : _buildSimpleExerciseList(filtered),
               ),
           ],
         ),
@@ -701,7 +817,9 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
     // Group exercises by their main muscle (first in muscleGroups)
     final grouped = <String, List<Exercise>>{};
     for (final ex in exercises) {
-      final mainMuscle = ex.muscleGroups.isNotEmpty ? ex.muscleGroups.first : 'Other';
+      final mainMuscle = ex.muscleGroups.isNotEmpty
+          ? ex.muscleGroups.first
+          : 'Other';
       grouped.putIfAbsent(mainMuscle, () => []).add(ex);
     }
 
@@ -719,13 +837,17 @@ class _ExercisePickerModalState extends State<_ExercisePickerModal> {
             muscleGroup.toUpperCase(),
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          children: groupExercises.map((ex) => ListTile(
-            title: Text(ex.name),
-            subtitle: Text(ex.muscleGroups.join(', ')),
-            onTap: () {
-              Navigator.of(context).pop(_ExercisePickerResult(ex));
-            },
-          )).toList(),
+          children: groupExercises
+              .map(
+                (ex) => ListTile(
+                  title: Text(ex.name),
+                  subtitle: Text(ex.muscleGroups.join(', ')),
+                  onTap: () {
+                    Navigator.of(context).pop(_ExercisePickerResult(ex));
+                  },
+                ),
+              )
+              .toList(),
         );
       },
     );
@@ -739,7 +861,8 @@ class _ExercisePickerResult {
 
 class WorkoutInProgressPage extends StatefulWidget {
   final List<WorkoutExerciseDraft> exercises;
-  const WorkoutInProgressPage({required this.exercises, Key? key}) : super(key: key);
+  const WorkoutInProgressPage({required this.exercises, Key? key})
+    : super(key: key);
 
   @override
   State<WorkoutInProgressPage> createState() => _WorkoutInProgressPageState();
@@ -787,28 +910,34 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
       final ex = widget.exercises[i];
       final sets = _completedSets[i] ?? [];
       if (sets.isNotEmpty) {
-        completedExercises.add(CompletedExercise()
-          ..name = ex.exerciseName
-          ..sets = sets);
+        completedExercises.add(
+          CompletedExercise()
+            ..name = ex.exerciseName
+            ..sets = sets,
+        );
       }
     }
     if (completedExercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No sets logged. Nothing to save.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No sets logged. Nothing to save.')),
+      );
       return;
     }
     final completedWorkout = CompletedWorkout()
       ..timestamp = DateTime.now()
       ..exercises = completedExercises
       ..durationSeconds = _elapsed.inSeconds;
-    
-    print('Saving completed workout with ${completedExercises.length} exercises');
-    
+
+    print(
+      'Saving completed workout with ${completedExercises.length} exercises',
+    );
+
     await isarInstance.writeTxn(() async {
       await isarInstance.completedWorkouts.put(completedWorkout);
     });
-    
+
     print('Completed workout saved with ID: ${completedWorkout.id}');
-    
+
     if (context.mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -834,6 +963,9 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
             icon: const Icon(Icons.more_vert),
             onSelected: (value) async {
               switch (value) {
+                case 'add_exercise':
+                  await _showAddExerciseModal();
+                  break;
                 case 'edit_exercises':
                   await _showEditExercisesModal();
                   break;
@@ -841,10 +973,26 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
             },
             itemBuilder: (context) => [
               PopupMenuItem(
+                value: 'add_exercise',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.add,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    SizedBox(width: 8),
+                    Text('Add Exercise'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'edit_exercises',
                 child: Row(
                   children: [
-                    Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+                    Icon(
+                      Icons.edit,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     SizedBox(width: 8),
                     Text('Edit Exercises'),
                   ],
@@ -873,7 +1021,9 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
             const SizedBox(height: 8),
             Text(
               'Elapsed Time',
-              style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary.withOpacity(0.7)),
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary.withOpacity(0.7),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -881,21 +1031,17 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 children: [
-                  Icon(Icons.fitness_center, color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Exercises',
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                    ),
+                  Icon(
+                    Icons.fitness_center,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.7),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    onPressed: _showAddExerciseModal,
-                    tooltip: 'Add Exercise',
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                  const SizedBox(width: 8),
+                  Text(
+                    'Exercises',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -917,11 +1063,13 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                       // Shift all keys between oldIndex and newIndex
                       if (oldIndex < newIndex) {
                         for (int i = oldIndex + 1; i <= newIndex; i++) {
-                          _completedSets[i - 1] = _completedSets.remove(i) ?? [];
+                          _completedSets[i - 1] =
+                              _completedSets.remove(i) ?? [];
                         }
                       } else {
                         for (int i = oldIndex - 1; i >= newIndex; i--) {
-                          _completedSets[i + 1] = _completedSets.remove(i) ?? [];
+                          _completedSets[i + 1] =
+                              _completedSets.remove(i) ?? [];
                         }
                       }
                       if (oldSets != null) {
@@ -930,26 +1078,33 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                     });
                   },
                   children: [
-                    for (int index = 0; index < widget.exercises.length; index++)
+                    for (
+                      int index = 0;
+                      index < widget.exercises.length;
+                      index++
+                    )
                       Container(
                         key: ValueKey('exercise_$index'),
                         width: double.infinity,
                         margin: const EdgeInsets.symmetric(vertical: 6),
                         child: Material(
-                          color: Theme.of(context).colorScheme.surface,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           elevation: 2,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
                             onTap: () async {
-                              final result = await Navigator.of(context).push<List<CompletedSet>>(
-                                MaterialPageRoute(
-                                  builder: (context) => ExerciseInProgressPage(
-                                    exercise: widget.exercises[index],
-                                    initialCompletedSets: _completedSets[index] ?? [],
-                                  ),
-                                ),
-                              );
+                              final result = await Navigator.of(context)
+                                  .push<List<CompletedSet>>(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ExerciseInProgressPage(
+                                            exercise: widget.exercises[index],
+                                            initialCompletedSets:
+                                                _completedSets[index] ?? [],
+                                          ),
+                                    ),
+                                  );
                               if (result != null) {
                                 setState(() {
                                   _completedSets[index] = result;
@@ -957,7 +1112,10 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                               }
                             },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16.0,
+                                horizontal: 20.0,
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -966,14 +1124,19 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                       Expanded(
                                         child: Text(
                                           widget.exercises[index].exerciseName,
-                                          style: theme.textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: theme.colorScheme.primary,
-                                          ),
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    theme.colorScheme.primary,
+                                              ),
                                         ),
                                       ),
                                       PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_vert, size: 20),
+                                        icon: const Icon(
+                                          Icons.more_vert,
+                                          size: 20,
+                                        ),
                                         onSelected: (value) async {
                                           switch (value) {
                                             case 'edit_sets':
@@ -989,7 +1152,13 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                             value: 'edit_sets',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit, color: Theme.of(context).colorScheme.primary, size: 16),
+                                                Icon(
+                                                  Icons.edit,
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                  size: 16,
+                                                ),
                                                 SizedBox(width: 8),
                                                 Text('Edit Sets'),
                                               ],
@@ -999,7 +1168,11 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                             value: 'remove_exercise',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.delete, color: Colors.red, size: 16),
+                                                Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                  size: 16,
+                                                ),
                                                 SizedBox(width: 8),
                                                 Text('Remove Exercise'),
                                               ],
@@ -1010,16 +1183,31 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  ...widget.exercises[index].sets.asMap().entries.map((entry) {
-                                    final isLogged = (_completedSets[index]?.length ?? 0) > entry.key;
-                                    return Text(
-                                      'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs' + (isLogged ? '  ✔' : ''),
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: isLogged ? theme.colorScheme.primary : theme.colorScheme.onSurface.withOpacity(0.7),
-                                        fontWeight: isLogged ? FontWeight.bold : FontWeight.normal,
-                                      ),
-                                    );
-                                  }),
+                                  ...widget.exercises[index].sets
+                                      .asMap()
+                                      .entries
+                                      .map((entry) {
+                                        final isLogged =
+                                            (_completedSets[index]?.length ??
+                                                0) >
+                                            entry.key;
+                                        return Text(
+                                          'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs' +
+                                              (isLogged ? '  ✔' : ''),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: isLogged
+                                                    ? Colors.green[700]
+                                                    : theme
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withOpacity(0.7),
+                                                fontWeight: isLogged
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                        );
+                                      }),
                                 ],
                               ),
                             ),
@@ -1031,13 +1219,15 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 12.0,
+              ),
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.flag),
-                label: const Text('Finish Workout'),
+                label: const Text('Finish'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: _finishWorkout,
@@ -1051,45 +1241,45 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
   }
 
   Future<void> _showAddExerciseModal() async {
-    final result = await showModalBottomSheet<_ExercisePickerResult>(
+    final exercises = await isar.exercises.where().findAll();
+    final selectedExercise = await showDialog<Exercise>(
       context: context,
-      isScrollControlled: true,
-      builder: (context) => const _ExercisePickerModal(),
-    );
-    
-    if (result != null) {
-      // Get weight suggestion for this exercise
-      final suggestion = await ExerciseSuggestionService.getWeightSuggestion(
-        isarInstance,
-        result.exercise.name,
-        10, // Default target reps
-      );
-      
-      setState(() {
-        final newExercise = WorkoutExerciseDraft(
-          result.exercise.name,
-          List.generate(
-            suggestion.suggestedSets > 0 ? suggestion.suggestedSets : 3,
-            (index) => WorkoutSetDraft(
-              reps: 10,
-              weight: suggestion.suggestedWeight > 0 ? suggestion.suggestedWeight : 0,
-            ),
+      builder: (context) => AlertDialog(
+        title: const Text('Add Exercise'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: ListView.builder(
+            itemCount: exercises.length,
+            itemBuilder: (context, index) {
+              final exercise = exercises[index];
+              return ListTile(
+                title: Text(exercise.name),
+                subtitle: Text(exercise.muscleGroups.join(', ')),
+                onTap: () => Navigator.of(context).pop(exercise),
+              );
+            },
           ),
-        );
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedExercise != null) {
+      setState(() {
+        final newExercise = WorkoutExerciseDraft(selectedExercise.name, [
+          WorkoutSetDraft(reps: 10, weight: 0),
+          WorkoutSetDraft(reps: 10, weight: 0),
+          WorkoutSetDraft(reps: 10, weight: 0),
+        ]);
         widget.exercises.add(newExercise);
         _completedSets[widget.exercises.length - 1] = [];
       });
-      
-      // Show suggestion info if available
-      if (suggestion.confidence > 0.0 && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added: ${result.exercise.name} with smart weight suggestions'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     }
   }
 
@@ -1155,7 +1345,9 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
             final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
             final newSetCount = widget.exercises[exerciseIndex].sets.length;
             if (completedCount > newSetCount) {
-              _completedSets[exerciseIndex] = _completedSets[exerciseIndex]!.take(newSetCount).toList();
+              _completedSets[exerciseIndex] = _completedSets[exerciseIndex]!
+                  .take(newSetCount)
+                  .toList();
             }
           });
         },
@@ -1185,7 +1377,11 @@ class _WorkoutInProgressPageState extends State<WorkoutInProgressPage> {
 class ExerciseInProgressPage extends StatefulWidget {
   final WorkoutExerciseDraft exercise;
   final List<CompletedSet> initialCompletedSets;
-  const ExerciseInProgressPage({required this.exercise, this.initialCompletedSets = const [], Key? key}) : super(key: key);
+  const ExerciseInProgressPage({
+    required this.exercise,
+    this.initialCompletedSets = const [],
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<ExerciseInProgressPage> createState() => _ExerciseInProgressPageState();
@@ -1201,7 +1397,10 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
   void initState() {
     super.initState();
     sets = widget.exercise.sets;
-    completed = List.generate(sets.length, (i) => i < widget.initialCompletedSets.length);
+    completed = List.generate(
+      sets.length,
+      (i) => i < widget.initialCompletedSets.length,
+    );
     loggedSets = List<CompletedSet>.from(widget.initialCompletedSets);
     currentSet = completed.indexOf(false);
     if (currentSet == -1) currentSet = 0;
@@ -1233,40 +1432,16 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
     });
   }
 
-  void _addSet() {
-    setState(() {
-      if (sets.isNotEmpty) {
-        final last = sets.last;
-        sets.add(WorkoutSetDraft(reps: last.reps, weight: last.weight));
-        completed.add(false);
-      } else {
-        sets.add(WorkoutSetDraft(reps: 10, weight: 0));
-        completed.add(false);
-      }
-    });
-  }
-
-  void _removeLastSet() {
-    if (sets.length > 1) {
-      setState(() {
-        sets.removeLast();
-        completed.removeLast();
-        // Adjust current set if needed
-        if (currentSet >= sets.length) {
-          currentSet = sets.length - 1;
-        }
-      });
-    }
-  }
-
   void _logCurrentSet() async {
     if (completed[currentSet]) return;
     setState(() {
       completed[currentSet] = true;
-      loggedSets.add(CompletedSet()
-        ..reps = sets[currentSet].reps
-        ..weight = sets[currentSet].weight
-        ..loggedAt = DateTime.now());
+      loggedSets.add(
+        CompletedSet()
+          ..reps = sets[currentSet].reps
+          ..weight = sets[currentSet].weight
+          ..loggedAt = DateTime.now(),
+      );
     });
     await showRestTimerModal(context, initialSeconds: 60);
     // Move to next incomplete set if any
@@ -1295,118 +1470,88 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
             onPressed: _onBack,
           ),
         ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Sets', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: sets.length,
-                    itemBuilder: (context, index) {
-                      final set = sets[index];
-                      final isCurrent = index == currentSet;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() => currentSet = index);
-                        },
-                        child: Card(
-                          color: completed[index]
-                              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-                              : isCurrent
-                                  ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3)
-                                  : null,
-                          child: ListTile(
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    initialValue: set.reps.toString(),
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Reps'),
-                                    onChanged: (val) {
-                                      final reps = int.tryParse(val) ?? 0;
-                                      _updateReps(index, reps);
-                                    },
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Sets', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: sets.length,
+                  itemBuilder: (context, index) {
+                    final set = sets[index];
+                    final isCurrent = index == currentSet;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => currentSet = index);
+                      },
+                      child: Card(
+                        color: completed[index]
+                            ? Colors.green[100]
+                            : isCurrent
+                            ? Colors.deepPurple[100]
+                            : null,
+                        child: ListTile(
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: set.reps.toString(),
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Reps',
                                   ),
+                                  onChanged: (val) {
+                                    final reps = int.tryParse(val) ?? 0;
+                                    _updateReps(index, reps);
+                                  },
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: TextFormField(
-                                    initialValue: set.weight.toInt().toString(),
-                                    keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(labelText: 'Weight (lbs)'),
-                                    onChanged: (val) {
-                                      final weight = int.tryParse(val) ?? 0;
-                                      _updateWeight(index, weight.toDouble());
-                                    },
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: set.weight.toInt().toString(),
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Weight (lbs)',
                                   ),
+                                  onChanged: (val) {
+                                    final weight = int.tryParse(val) ?? 0;
+                                    _updateWeight(index, weight.toDouble());
+                                  },
                                 ),
-                              ],
-                            ),
-                                                      trailing: completed[index]
-                              ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
-                              : isCurrent
-                                  ? Icon(Icons.arrow_right, color: Theme.of(context).colorScheme.secondary)
-                                  : null,
+                              ),
+                            ],
                           ),
+                          trailing: completed[index]
+                              ? const Icon(Icons.check, color: Colors.green)
+                              : isCurrent
+                              ? const Icon(
+                                  Icons.arrow_right,
+                                  color: Colors.deepPurple,
+                                )
+                              : null,
                         ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Quick Set Management Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.remove),
-                        label: const Text('Remove Set'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          foregroundColor: Theme.of(context).colorScheme.onError,
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        onPressed: sets.length > 1 ? _removeLastSet : null,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Set'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.secondary,
-                          foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                        onPressed: _addSet,
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
-                              ElevatedButton.icon(
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
                 icon: const Icon(Icons.check),
                 label: const Text('Log Set'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: completed[currentSet] 
-                      ? Theme.of(context).colorScheme.surfaceVariant
+                  backgroundColor: completed[currentSet]
+                      ? Colors.grey
                       : Theme.of(context).colorScheme.primary,
-                  foregroundColor: completed[currentSet] 
-                      ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : Theme.of(context).colorScheme.onPrimary,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: completed[currentSet] ? null : _logCurrentSet,
               ),
-                const SizedBox(height: 16), // Extra bottom padding for safety
-              ],
-            ),
+            ],
           ),
         ),
       ),
@@ -1414,7 +1559,10 @@ class _ExerciseInProgressPageState extends State<ExerciseInProgressPage> {
   }
 }
 
-Future<void> showRestTimerModal(BuildContext context, {int initialSeconds = 60}) async {
+Future<void> showRestTimerModal(
+  BuildContext context, {
+  int initialSeconds = 60,
+}) async {
   await showModalBottomSheet(
     context: context,
     isDismissible: true,
@@ -1470,13 +1618,20 @@ class _RestTimerModalState extends State<_RestTimerModal> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Rest Timer', style: theme.textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.primary)),
+          Text(
+            'Rest Timer',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             '${(secondsLeft ~/ 60).toString().padLeft(2, '0')}:${(secondsLeft % 60).toString().padLeft(2, '0')}',
             style: theme.textTheme.displayMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: finished ? Colors.green : Theme.of(context).colorScheme.primary,
+              color: finished
+                  ? Colors.green
+                  : Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 16),
@@ -1484,7 +1639,10 @@ class _RestTimerModalState extends State<_RestTimerModal> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: Icon(Icons.remove_circle, color: Theme.of(context).colorScheme.primary),
+                icon: Icon(
+                  Icons.remove_circle,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 iconSize: 36,
                 onPressed: secondsLeft > 10
                     ? () => setState(() => secondsLeft -= 10)
@@ -1492,7 +1650,10 @@ class _RestTimerModalState extends State<_RestTimerModal> {
               ),
               const SizedBox(width: 24),
               IconButton(
-                icon: Icon(Icons.add_circle, color: Theme.of(context).colorScheme.primary),
+                icon: Icon(
+                  Icons.add_circle,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 iconSize: 36,
                 onPressed: () => setState(() => secondsLeft += 10),
               ),
@@ -1503,7 +1664,9 @@ class _RestTimerModalState extends State<_RestTimerModal> {
             icon: const Icon(Icons.check),
             label: Text(finished ? 'Done' : 'Skip'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: finished ? Colors.green : Theme.of(context).colorScheme.primary,
+              backgroundColor: finished
+                  ? Colors.green
+                  : Theme.of(context).colorScheme.primary,
               minimumSize: const Size.fromHeight(48),
             ),
             onPressed: () => Navigator.of(context).pop(),
@@ -1534,8 +1697,12 @@ class _EditSetsModalState extends State<_EditSetsModal> {
     super.initState();
     sets = widget.exercise.sets;
     // Initialize controllers
-    repsControllers = sets.map((set) => TextEditingController(text: set.reps.toString())).toList();
-    weightControllers = sets.map((set) => TextEditingController(text: set.weight.toString())).toList();
+    repsControllers = sets
+        .map((set) => TextEditingController(text: set.reps.toString()))
+        .toList();
+    weightControllers = sets
+        .map((set) => TextEditingController(text: set.weight.toString()))
+        .toList();
   }
 
   @override
@@ -1598,7 +1765,10 @@ class _EditSetsModalState extends State<_EditSetsModal> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Edit Sets', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  'Edit Sets',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.of(context).pop(),
@@ -1633,7 +1803,9 @@ class _EditSetsModalState extends State<_EditSetsModal> {
                         child: TextFormField(
                           controller: weightControllers[index],
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Weight (lbs)'),
+                          decoration: const InputDecoration(
+                            labelText: 'Weight (lbs)',
+                          ),
                           onChanged: (val) {
                             final weight = int.tryParse(val) ?? 0;
                             _updateWeight(index, weight.toDouble());
@@ -1670,9 +1842,15 @@ class _EditSetsModalState extends State<_EditSetsModal> {
                     if (sets.isNotEmpty) {
                       final last = sets.last;
                       setState(() {
-                        sets.add(WorkoutSetDraft(reps: last.reps, weight: last.weight));
-                        repsControllers.add(TextEditingController(text: last.reps.toString()));
-                        weightControllers.add(TextEditingController(text: last.weight.toString()));
+                        sets.add(
+                          WorkoutSetDraft(reps: last.reps, weight: last.weight),
+                        );
+                        repsControllers.add(
+                          TextEditingController(text: last.reps.toString()),
+                        );
+                        weightControllers.add(
+                          TextEditingController(text: last.weight.toString()),
+                        );
                       });
                     } else {
                       setState(() {
@@ -1698,7 +1876,8 @@ class _EditSetsModalState extends State<_EditSetsModal> {
   }
 }
 
-Future<void> showWorkoutSummaryDialog(BuildContext context, {
+Future<void> showWorkoutSummaryDialog(
+  BuildContext context, {
   required Duration duration,
   required List<CompletedExercise> exercises,
 }) async {
@@ -1706,7 +1885,10 @@ Future<void> showWorkoutSummaryDialog(BuildContext context, {
   final muscleGroups = <String>{};
   double totalPounds = 0;
   for (final ex in exercises) {
-    final exercise = await isar.exercises.filter().nameEqualTo(ex.name).findFirst();
+    final exercise = await isar.exercises
+        .filter()
+        .nameEqualTo(ex.name)
+        .findFirst();
     if (exercise != null) {
       muscleGroups.addAll(exercise.muscleGroups);
     }
@@ -1722,7 +1904,9 @@ Future<void> showWorkoutSummaryDialog(BuildContext context, {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Duration: ${duration.inMinutes} min ${duration.inSeconds % 60} sec'),
+          Text(
+            'Duration: ${duration.inMinutes} min ${duration.inSeconds % 60} sec',
+          ),
           const SizedBox(height: 8),
           Text('Muscles worked: ${muscleGroups.join(", ")}'),
           const SizedBox(height: 8),
@@ -1742,12 +1926,19 @@ Future<void> showWorkoutSummaryDialog(BuildContext context, {
 class WorkoutSummaryPage extends StatelessWidget {
   final Duration duration;
   final CompletedWorkout completedWorkout;
-  const WorkoutSummaryPage({required this.duration, required this.completedWorkout, Key? key}) : super(key: key);
+  const WorkoutSummaryPage({
+    required this.duration,
+    required this.completedWorkout,
+    Key? key,
+  }) : super(key: key);
 
   Future<Set<String>> _getMusclesWorked() async {
     final muscleGroups = <String>{};
     for (final ex in completedWorkout.exercises) {
-      final exercise = await isar.exercises.filter().nameEqualTo(ex.name).findFirst();
+      final exercise = await isar.exercises
+          .filter()
+          .nameEqualTo(ex.name)
+          .findFirst();
       if (exercise != null) {
         muscleGroups.addAll(exercise.muscleGroups);
       }
@@ -1782,13 +1973,27 @@ class WorkoutSummaryPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Workout Complete!', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Workout Complete!',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text('Duration: ${duration.inMinutes} min ${duration.inSeconds % 60} sec', style: theme.textTheme.titleMedium),
+                Text(
+                  'Duration: ${duration.inMinutes} min ${duration.inSeconds % 60} sec',
+                  style: theme.textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
-                Text('Muscles worked: ${muscles.isEmpty ? "-" : muscles.join(", ")}', style: theme.textTheme.titleMedium),
+                Text(
+                  'Muscles worked: ${muscles.isEmpty ? "-" : muscles.join(", ")}',
+                  style: theme.textTheme.titleMedium,
+                ),
                 const SizedBox(height: 8),
-                Text('Total pounds lifted: ${totalPounds.toStringAsFixed(0)} lbs', style: theme.textTheme.titleMedium),
+                Text(
+                  'Total pounds lifted: ${totalPounds.toStringAsFixed(0)} lbs',
+                  style: theme.textTheme.titleMedium,
+                ),
                 const SizedBox(height: 24),
                 Text('Breakdown:', style: theme.textTheme.titleLarge),
                 const SizedBox(height: 8),
@@ -1804,11 +2009,18 @@ class WorkoutSummaryPage extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(ex.name, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                              ...ex.sets.asMap().entries.map((entry) => Text(
-                                    'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs',
-                                    style: theme.textTheme.bodyMedium,
-                                  )),
+                              Text(
+                                ex.name,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              ...ex.sets.asMap().entries.map(
+                                (entry) => Text(
+                                  'Set ${entry.key + 1}: ${entry.value.reps} x ${entry.value.weight.toInt()} lbs',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1837,4 +2049,4 @@ class WorkoutSummaryPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

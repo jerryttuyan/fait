@@ -18,13 +18,13 @@ class FitnessAppLandingPage extends StatefulWidget {
 class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
   int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form controllers
   final _nameController = TextEditingController();
   final _heightFtController = TextEditingController();
   final _heightInController = TextEditingController();
   final _weightController = TextEditingController();
-  
+
   // Form data
   Gender _gender = Gender.male;
   ActivityLevel _activityLevel = ActivityLevel.moderatelyActive;
@@ -36,7 +36,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
     'Basic Info',
     'Physical Stats',
     'Goals & Activity',
-    'Ready to Start!'
+    'Ready to Start!',
   ];
 
   @override
@@ -86,7 +86,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
       final weightEntry = WeightEntry()
         ..weight = weight
         ..date = DateTime.now();
-      
+
       await isar.writeTxn(() async {
         await isar.userProfiles.put(profile);
         await isar.weightEntrys.put(weightEntry);
@@ -108,7 +108,11 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _birthday ?? DateTime.now().subtract(const Duration(days: 6570)), // Default to 18 years ago
+      initialDate:
+          _birthday ??
+          DateTime.now().subtract(
+            const Duration(days: 6570),
+          ), // Default to 18 years ago
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
@@ -140,11 +144,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.fitness_center,
-          size: 100,
-          color: Colors.blue.shade900,
-        ),
+        Icon(Icons.fitness_center, size: 100, color: Colors.blue.shade900),
         const SizedBox(height: 30),
         Text(
           'Fait Fitness Tracker',
@@ -174,10 +174,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 50,
-              vertical: 18,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
             elevation: 5,
           ),
           child: const Text(
@@ -200,7 +197,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 30),
@@ -208,29 +205,49 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
             controller: _nameController,
             decoration: InputDecoration(
               labelText: 'Name',
+              labelStyle: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
               fillColor: Colors.white.withOpacity(0.9),
             ),
-            validator: (value) => (value == null || value.isEmpty) ? 'Please enter your name' : null,
+            validator: (value) => (value == null || value.isEmpty)
+                ? 'Please enter your name'
+                : null,
           ),
           const SizedBox(height: 20),
           DropdownButtonFormField<Gender>(
             value: _gender,
             decoration: InputDecoration(
               labelText: 'Gender',
+              labelStyle: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
               fillColor: Colors.white.withOpacity(0.9),
             ),
-            items: Gender.values.map((g) => DropdownMenuItem(
-              value: g,
-              child: Text(g.name),
-            )).toList(),
+            items: Gender.values
+                .map(
+                  (g) => DropdownMenuItem(
+                    value: g,
+                    child: Text(
+                      g.displayName,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
             onChanged: (g) => setState(() => _gender = g!),
           ),
           const SizedBox(height: 20),
@@ -238,11 +255,12 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
             children: [
               Expanded(
                 child: Text(
-                  _birthday == null 
-                    ? 'Select Birthday' 
-                    : 'Birthday: ${DateFormat.yMMMd().format(_birthday!)}',
+                  _birthday == null
+                      ? 'Select Birthday'
+                      : 'Birthday: ${DateFormat.yMMMd().format(_birthday!)}',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
@@ -252,7 +270,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                 child: Text(
                   'Select Date',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    color: Colors.black87,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -270,8 +288,16 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    foregroundColor: Colors.black87,
+                    side: const BorderSide(color: Colors.black87),
                   ),
-                  child: const Text('Back'),
+                  child: const Text(
+                    'Back',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -303,7 +329,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black87,
           ),
         ),
         const SizedBox(height: 30),
@@ -314,6 +340,10 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                 controller: _heightFtController,
                 decoration: InputDecoration(
                   labelText: 'Height (ft)',
+                  labelStyle: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -336,6 +366,10 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                 controller: _heightInController,
                 decoration: InputDecoration(
                   labelText: 'Height (in)',
+                  labelStyle: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -359,9 +393,11 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           controller: _weightController,
           decoration: InputDecoration(
             labelText: 'Current Weight (lbs)',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            labelStyle: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
             ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.white.withOpacity(0.9),
           ),
@@ -385,6 +421,8 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  foregroundColor: Colors.black87,
+                  side: const BorderSide(color: Colors.black87),
                 ),
                 child: const Text('Back'),
               ),
@@ -417,7 +455,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.black87,
           ),
         ),
         const SizedBox(height: 30),
@@ -425,16 +463,28 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           value: _activityLevel,
           decoration: InputDecoration(
             labelText: 'Activity Level',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            labelStyle: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
             ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.white.withOpacity(0.9),
           ),
-          items: ActivityLevel.values.map((a) => DropdownMenuItem(
-            value: a,
-            child: Text(a.name),
-          )).toList(),
+          items: ActivityLevel.values
+              .map(
+                (a) => DropdownMenuItem(
+                  value: a,
+                  child: Text(
+                    a.displayName,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (a) => setState(() => _activityLevel = a!),
         ),
         const SizedBox(height: 20),
@@ -442,16 +492,28 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           value: _weightGoal,
           decoration: InputDecoration(
             labelText: 'Weight Goal',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            labelStyle: TextStyle(
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
             ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
             fillColor: Colors.white.withOpacity(0.9),
           ),
-          items: WeightGoal.values.map((g) => DropdownMenuItem(
-            value: g,
-            child: Text(g.name),
-          )).toList(),
+          items: WeightGoal.values
+              .map(
+                (g) => DropdownMenuItem(
+                  value: g,
+                  child: Text(
+                    g.displayName,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (g) => setState(() => _weightGoal = g!),
         ),
         const SizedBox(height: 40),
@@ -465,6 +527,8 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  foregroundColor: Colors.black87,
+                  side: const BorderSide(color: Colors.black87),
                 ),
                 child: const Text('Back'),
               ),
@@ -492,27 +556,23 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.check_circle,
-          size: 80,
-          color: Colors.green.shade600,
-        ),
+        Icon(Icons.check_circle, size: 80, color: Colors.blue.shade900),
         const SizedBox(height: 30),
         Text(
           'You\'re all set!',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
+            color: Colors.blue.shade700,
           ),
         ),
         const SizedBox(height: 15),
         Text(
-          'Welcome to Fait, ${_nameController.text}! Your personalized fitness journey starts now.',
+          'Welcome to Fait! ${_nameController.text}Your personalized fitness journey starts now.',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 18,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+            color: Colors.blue.shade700,
             height: 1.5,
           ),
         ),
@@ -521,14 +581,11 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           onPressed: _completeOnboarding,
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.white,
-            backgroundColor: Colors.green.shade600,
+            backgroundColor: Colors.blue.shade700,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 50,
-              vertical: 18,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
             elevation: 5,
           ),
           child: const Text(
@@ -548,10 +605,7 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade100,
-              Colors.blue.shade400,
-            ],
+            colors: [Colors.blue.shade100, Colors.blue.shade400],
           ),
         ),
         child: SafeArea(
@@ -568,9 +622,9 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                           height: 4,
                           margin: const EdgeInsets.symmetric(horizontal: 2),
                           decoration: BoxDecoration(
-                            color: index <= _currentStep 
-                              ? Colors.blue.shade700 
-                              : Colors.blue.shade200,
+                            color: index <= _currentStep
+                                ? Colors.blue.shade700
+                                : Colors.blue.shade200,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -581,17 +635,15 @@ class _FitnessAppLandingPageState extends State<FitnessAppLandingPage> {
                   Text(
                     'Step ${_currentStep + 1} of ${_steps.length}',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Colors.blue.shade700,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 20),
                 ],
-                
+
                 // Main content
-                Expanded(
-                  child: _buildStepContent(),
-                ),
+                Expanded(child: _buildStepContent()),
               ],
             ),
           ),
